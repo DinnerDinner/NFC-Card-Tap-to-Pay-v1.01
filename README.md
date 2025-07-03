@@ -1,4 +1,5 @@
-NFC-Android-Tap-to-Pay-with-Wallet
+# NFC-Android-Tap-to-Pay-with-Wallet
+
 This project centers around the development of a modern digital wallet application that facilitates peer-to-peer transactions through NFC card interactions, without depending on traditional payment processors or external hardware readers. At its core, the app enables users to deposit funds from their real-world bank accounts into a virtual in-app wallet, then use that wallet to conduct local, tap-based transactions with other users. The system circumvents PCI compliance complexities by never handling raw card data; instead, it relies on passive NFC detection for identification, while all actual money movement is handled via internal account logic and basic external bank APIs.
 
 Upon onboarding, users create a wallet account and manually input their basic financial information (e.g., account number, routing number, or IBAN), which enables the platform to facilitate incoming and outgoing bank transfers. These transfers are strictly limited to wallet top-ups and withdrawals. No real-time card charging or direct interaction with the card networks (Visa, MasterCard, etc.) is performed, meaning the app avoids any sensitive handling of PANs (Primary Account Numbers), CVVs, or magnetic stripe data.
