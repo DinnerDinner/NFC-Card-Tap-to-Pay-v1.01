@@ -60,6 +60,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onNewIntent(intent: Intent?) {
         super.onNewIntent(intent)
+        val sigma = "sigma"
         val action = intent?.action
 
         if (action == NfcAdapter.ACTION_TAG_DISCOVERED ||
