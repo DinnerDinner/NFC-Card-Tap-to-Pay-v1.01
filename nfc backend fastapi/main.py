@@ -18,3 +18,6 @@ async def receive_nfc_data(request: Request):
 @app.get("/latest-uid")
 async def get_latest_uid():
     return {"latest_uid": latest_uid}
+
+
+print('Modd')
