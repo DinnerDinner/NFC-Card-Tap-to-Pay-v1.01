@@ -1,5 +1,10 @@
 package com.example.nfccardtaptopayv101
-
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import org.json.JSONObject
+import java.io.File
+import java.io.FileOutputStream
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -22,6 +27,12 @@ import android.nfc.NdefRecord
 import android.widget.Toast
 import android.nfc.tech.Ndef          //  ← add this
 import android.nfc.tech.IsoDep
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.RequestBody.Companion.toRequestBody
+import android.os.StrictMode
+
 
 class MainActivity : ComponentActivity() {
 
@@ -60,25 +71,37 @@ class MainActivity : ComponentActivity() {
 
     override fun onNewIntent(intent: Intent?) {
         super.onNewIntent(intent)
-        val sigma = "sigma"
         val action = intent?.action
 
         if (action == NfcAdapter.ACTION_TAG_DISCOVERED ||
             action == NfcAdapter.ACTION_TECH_DISCOVERED
-            ) {
-
+        ) {
             val tag: Tag? = intent.getParcelableExtra(NfcAdapter.EXTRA_TAG)
             val uid = tag?.id?.joinToString("") { "%02X".format(it) } ?: "N/A"
 
-            runOnUiThread {
-                Toast.makeText(
-                    this,
-                    "UID: $uid",
-                    Toast.LENGTH_SHORT
-                ).show()
-            }
 
+            Thread {
+                val client = OkHttpClient()
+                val json = """{"uid":"$uid"}"""
+                val requestBody = json.toRequestBody("application/json".toMediaTypeOrNull())
+                val request = Request.Builder()
+                    .url("https://e74d-2605-8d80-5a0-3403-a14d-1fde-7651-e385.ngrok-free.app/nfc-tap")
+                    .post(requestBody)
+                    .build()
 
+                client.newCall(request).execute().use { response ->
+                    val responseBody = response.body?.string()
+                    val message = responseBody?.let {
+                        val regex = """"message"\s*:\s*"([^"]+)"""".toRegex()
+                        regex.find(it)?.groups?.get(1)?.value ?: "No message"
+                    } ?: "No response"
+
+                    runOnUiThread {
+                        Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
+                    }
+                }
+
+            }.start()
         }
     }
 }
