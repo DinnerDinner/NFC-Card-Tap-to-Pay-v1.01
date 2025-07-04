@@ -85,7 +85,7 @@ class MainActivity : ComponentActivity() {
                 val json = """{"uid":"$uid"}"""
                 val requestBody = json.toRequestBody("application/json".toMediaTypeOrNull())
                 val request = Request.Builder()
-                    .url("https://e74d-2605-8d80-5a0-3403-a14d-1fde-7651-e385.ngrok-free.app/nfc-tap")
+                    .url("https://9518-207-253-242-126.ngrok-free.app/nfc-tap")
                     .post(requestBody)
                     .build()
 
