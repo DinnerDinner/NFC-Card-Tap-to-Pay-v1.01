@@ -4,12 +4,26 @@ python -m venv env
 env\Scripts\activate
 uvicorn main:app --host 127.0.0.1 --port 8000
 
+
+
 To start the ngrok:
 cd into C: only
 ngrok https 8000
 
-To start the docker container with db:
-you can play it from docker desktop
-and run docker ps in cmd to check if its up
+Take the ngrok url and plug into .url() in MainActivity.kt in Android Studio app and reBuild
 
+
+
+To restart the container (if already created before):
+docker start nfc-postgres
+
+To create the Docker PostgreSQL container with persistent volume:
+docker volume create nfcwallet_data
+docker run --name nfc-postgres -e POSTGRES_USER=nfcuser -e POSTGRES_PASSWORD=nfcpass -e POSTGRES_DB=nfcwallet -v nfcwallet_data:/var/lib/postgresql/data -p 5432:5432 -d postgres
+
+To stop the container (e.g., before shutdown):
+docker stop nfc-postgres
+
+To check if it's running:
+docker ps
 """

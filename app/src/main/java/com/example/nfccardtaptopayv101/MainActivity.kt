@@ -62,7 +62,6 @@ class MainActivity : ComponentActivity() {
         nfcAdapter?.enableForegroundDispatch(this, pendingIntent, filters, techList)
     }
 
-
     override fun onPause() {
         super.onPause()
         nfcAdapter?.disableForegroundDispatch(this)
@@ -85,20 +84,14 @@ class MainActivity : ComponentActivity() {
                 val json = """{"uid":"$uid"}"""
                 val requestBody = json.toRequestBody("application/json".toMediaTypeOrNull())
                 val request = Request.Builder()
-                    .url("https://9518-207-253-242-126.ngrok-free.app/nfc-tap")
+                    .url("https://1e2e-207-253-242-126.ngrok-free.app/nfc-tap")
                     .post(requestBody)
                     .build()
 
-                client.newCall(request).execute().use { response ->
-                    val responseBody = response.body?.string()
-                    val message = responseBody?.let {
-                        val regex = """"message"\s*:\s*"([^"]+)"""".toRegex()
-                        regex.find(it)?.groups?.get(1)?.value ?: "No message"
-                    } ?: "No response"
-
-                    runOnUiThread {
-                        Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
-                    }
+                client.newCall(request).execute().use { res ->
+                    val bodyString = res.body?.string() ?: ""
+                    val msg = JSONObject(bodyString).optString("message", "No message")
+                    runOnUiThread { Toast.makeText(this, msg, Toast.LENGTH_SHORT).show() }
                 }
 
             }.start()
