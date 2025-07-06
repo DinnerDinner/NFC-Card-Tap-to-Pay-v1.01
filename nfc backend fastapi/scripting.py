@@ -1,21 +1,27 @@
 """
+
+To restart the container (if already created before):
+docker start nfc-postgres
+
+
 To start the server local:
 python -m venv env
 env\Scripts\activate
 uvicorn main:app --host 127.0.0.1 --port 8000
 
 
+To start the LocalTunnel (replacing ngrok): 
+lt --port 8000 --subdomain nfcwalletdev  # Try reusing this every time
 
-To start the ngrok:
+
+
+IN CASE LOCAL TUNNEL NU BUENO -- To start the ngrok:
 cd into C: only
-ngrok https 8000
+ngrok http 8000
 
 Take the ngrok url and plug into .url() in MainActivity.kt in Android Studio app and reBuild
 
 
-
-To restart the container (if already created before):
-docker start nfc-postgres
 
 To create the Docker PostgreSQL container with persistent volume:
 docker volume create nfcwallet_data

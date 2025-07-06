@@ -1,33 +1,51 @@
-# import random
-# from sqlalchemy.orm import Session
-# from database import SessionLocal, engine
-# from models import Base, Card
+import random
+from sqlalchemy.orm import Session
+from database import SessionLocal, engine
+from models import Base, User
+from datetime import date
 
-# # Make sure tables exist
-# Base.metadata.create_all(bind=engine)
+# Ensure tables exist
+Base.metadata.create_all(bind=engine)
 
-# def create_fake_card(uid: str, session: Session):
-#     # Check if UID already exists
-#     card = session.query(Card).filter(Card.uid == uid).first()
-#     if card:
-#         print(f"Card with UID {uid} already exists.")
-#         return card
+def create_fake_user(card_uid: str, session: Session):
+    # Check if card_uid already exists
+    user = session.query(User).filter(User.card_uid == card_uid).first()
+    if user:
+        print(f"User with card_uid {card_uid} already exists.")
+        return user
     
-#     # Generate random balance for dummy data
-#     balance = round(random.uniform(0, 1000), 2)
-#     new_card = Card(uid=uid, balance=balance)
-#     session.add(new_card)
-#     session.commit()
-#     print(f"Inserted new card UID {uid} with balance {balance}")
-#     return new_card
+    # Generate random dummy data for required fields
+    fake_first_name = "Test"
+    fake_last_name = f"User{random.randint(1000,9999)}"
+    fake_email = f"{fake_first_name.lower()}.{fake_last_name.lower()}@example.com"
+    fake_phone = f"+1000000{random.randint(1000,9999)}"
+    fake_dob = date(2000, 1, 1)
+    fake_password_hash = "hashedpassword"  # Placeholder; hash properly in real code
+    fake_balance_cents = random.randint(0, 100000)  # 0 to 1000.00 dollars in cents
 
-# def main():
-#     session = SessionLocal()
-#     # Example: Insert 2 fake cards
-#     for i in range(2):
-#         fake_uid = f"FAKEUID{i+10:03d}"
-#         create_fake_card(fake_uid, session)
-#     session.close()
+    new_user = User(
+        first_name=fake_first_name,
+        last_name=fake_last_name,
+        email=fake_email,
+        phone_number=fake_phone,
+        dob=fake_dob,
+        password_hash=fake_password_hash,
+        balance_cents=fake_balance_cents,
+        card_uid=card_uid,
+        is_cadet=True  # example flag, can customize per use case
+    )
+    session.add(new_user)
+    session.commit()
+    print(f"Inserted new user with card_uid {card_uid}, balance {fake_balance_cents/100:.2f} USD")
+    return new_user
 
-# if __name__ == "__main__":
-#     main()
+def main():
+    session = SessionLocal()
+    # Insert 2 fake users
+    for i in range(2):
+        fake_uid = f"FAKEUID{i+10:03d}"
+        create_fake_user(fake_uid, session)
+    session.close()
+
+if __name__ == "__main__":
+    main()
