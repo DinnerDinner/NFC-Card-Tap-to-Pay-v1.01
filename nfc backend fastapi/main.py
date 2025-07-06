@@ -52,12 +52,12 @@ def register_user(payload: UserRegistrationPayload, db: Session = Depends(get_db
 
     # Simulate balance
     balance_cents = random.randint(0, 100000)
-
+    email = payload.email.lower()
     # Create user object
     user = User(
         first_name=payload.first_name,
         last_name=payload.last_name,
-        email=payload.email,
+        email=email,
         phone_number=payload.phone_number,
         dob=payload.dob,
         password_hash=payload.password,  
@@ -79,13 +79,16 @@ def register_user(payload: UserRegistrationPayload, db: Session = Depends(get_db
     }
 
 
+
+
 class UserLoginPayload(BaseModel):
     email: EmailStr
     password: str
 
 @app.post("/login")
 def login(payload: UserLoginPayload, db: Session = Depends(get_db)):
-    user = db.query(User).filter(User.email == payload.email).first()
+    email = payload.email.lower()
+    user = db.query(User).filter(User.email == email).first()
     if not user:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid email or password")
     # For now, password is stored as plain text (not secure), do direct compare
@@ -106,71 +109,69 @@ def login(payload: UserLoginPayload, db: Session = Depends(get_db)):
 
 
 
-
-
-
-
-def get_or_create_user_by_card_uid(uid: str, db: Session) -> tuple[User, bool]:
-    user = db.query(User).filter(User.card_uid == uid).first()
-    if user:
-        return user, True
-
-    # Create new user with simulated data
-    new_balance = random.randint(0, 100000)  # cents
-    first_name = random.choice(["Alice", "Bob", "Charlie", "Diana", "Eve", "Frank"])
-    last_name = random.choice(["Smith", "Johnson", "Williams", "Brown", "Jones", "Garcia"])
-    email = f"{first_name.lower()}.{last_name.lower()}{random.randint(1,999)}@example.com"
-    phone_number = f"+1000000{random.randint(1000,9999)}"
-    dob = random_date()
-    password_hash = "hashedpasswordplaceholder"  # replace with real hashing later
-
-    user = User(
-        card_uid=uid,
-        balance_cents=new_balance,
-        first_name=first_name,
-        last_name=last_name,
-        email=email,
-        phone_number=phone_number,
-        dob=dob,
-        password_hash=password_hash,
-        is_cadet=False,
-        is_hospital_user=False,
-        is_student=False,
-        status="active",
-        last_login=None,
-    )
-    db.add(user)
-    db.commit()
-    db.refresh(user)
-    return user, False
-
-
-
-@app.post("/nfc-tap")
-def nfc_tap(payload: dict, db: Session = Depends(get_db)):
-    uid = payload.get("uid")
-
-
-    user, existing = get_or_create_user_by_card_uid(uid, db)
-
-    # Prepare balance in dollars from cents
-    balance_dollars = user.balance_cents / 100
-
+@app.post("/profile")
+def get_profile(payload: dict, db: Session = Depends(get_db)):
+    email = payload.get("email")
+    user = db.query(User).filter(User.email == email).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
     return {
-        "uid": user.card_uid,
         "first_name": user.first_name,
         "last_name": user.last_name,
         "email": user.email,
         "phone_number": user.phone_number,
         "dob": user.dob.isoformat() if user.dob else None,
-        "balance": balance_dollars,
-        "existing_user": existing,
-        "message": (
-            f"Welcome back, {user.first_name}! Card ending in {user.card_uid[-4:]} balance ${balance_dollars:.2f}"
-            if existing
-            else f"New user {user.first_name} created with starting balance ${balance_dollars:.2f}"
-        )
+        "balance": user.balance_cents / 100,
+        "card_uid": user.card_uid, 
+        "is_cadet": "Yes" if user.is_cadet else "No",
+        "is_student": "Yes" if user.is_student else "No",
+        "is_hospital_user": "Yes" if user.is_hospital_user else "No"
     }
+
+
+class PurchasePayload(BaseModel):
+    uid: str              # tapped‑card UID  (customer)
+    merchant_email: EmailStr
+    amount: float         # CAD dollars (positive)
+
+@app.post("/purchase")
+def purchase(payload: PurchasePayload, db: Session = Depends(get_db)):
+    """
+    1.  Find customer by physical‑card UID  (case‑exact).
+    2.  Find merchant by e‑mail (case‑insensitive).
+    3.  Move `amount` dollars from customer to merchant.
+    """
+    if payload.amount <= 0:
+        raise HTTPException(status_code=400, detail="Amount must be positive")
+
+    # --- Locate customer (tapped card) -------------------------------------
+    customer = db.query(User).filter(User.card_uid == payload.uid).first()
+    if not customer:
+        raise HTTPException(status_code=404, detail="Customer card not found")
+
+    # --- Locate merchant ----------------------------------------------------
+    merchant_email = payload.merchant_email.lower()
+    merchant = db.query(User).filter(User.email == merchant_email).first()
+    if not merchant:
+        raise HTTPException(status_code=404, detail="Merchant not found")
+
+    # --- Funds check --------------------------------------------------------
+    cents = int(round(payload.amount * 100))
+    if customer.balance_cents < cents:
+        raise HTTPException(status_code=400, detail="Customer has insufficient funds")
+
+    # --- Transfer -----------------------------------------------------------
+    customer.balance_cents -= cents
+    merchant.balance_cents += cents
+    db.commit()
+
+    return {
+        "message": f"✅ ${payload.amount:.2f} transferred "
+                   f"from {customer.first_name} to {merchant.first_name}.",
+        "customer_balance": customer.balance_cents / 100,
+        "merchant_balance": merchant.balance_cents / 100
+    }
+
 
 print("V2 Achieved")
 
