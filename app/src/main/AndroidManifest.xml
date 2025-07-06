@@ -18,7 +18,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.NFCCardTapToPayV101" >
         <activity android:name=".SignUpActivity" />
-        <activity android:name=".LoggedInActivity" />
+        <activity android:name=".LoginActivity" />
 
         <activity
             android:name=".MainActivity"

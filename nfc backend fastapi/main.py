@@ -1,6 +1,6 @@
 import random
 from datetime import date, datetime
-from fastapi import FastAPI, Depends, HTTPException
+from fastapi import FastAPI, Depends, HTTPException, status
 from pydantic import BaseModel, EmailStr
 from sqlalchemy.orm import Session
 
@@ -38,6 +38,7 @@ class UserRegistrationPayload(BaseModel):
     dob: date
     password: str 
     card_uid: str
+
 
 # -------------------- Real Form-Based Registration --------------------
 
@@ -77,6 +78,31 @@ def register_user(payload: UserRegistrationPayload, db: Session = Depends(get_db
         "balance_dollars": balance_cents / 100
     }
 
+
+class UserLoginPayload(BaseModel):
+    email: EmailStr
+    password: str
+
+@app.post("/login")
+def login(payload: UserLoginPayload, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.email == payload.email).first()
+    if not user:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid email or password")
+    # For now, password is stored as plain text (not secure), do direct compare
+    if user.password_hash != payload.password:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid email or password")
+
+    balance_dollars = user.balance_cents / 100
+    return {
+        "user_id": user.id,
+        "first_name": user.first_name,
+        "last_name": user.last_name,
+        "email": user.email,
+        "phone_number": user.phone_number,
+        "dob": user.dob.isoformat() if user.dob else None,
+        "balance": balance_dollars,
+        "message": f"Welcome back, {user.first_name}!"
+    }
 
 
 
