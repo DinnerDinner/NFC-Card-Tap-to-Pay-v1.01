@@ -1,57 +1,84 @@
 package com.example.nfccardtaptopayv101.ui.theme
 
-import android.app.Activity
-import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.dynamicDarkColorScheme
-import androidx.compose.material3.dynamicLightColorScheme
-import androidx.compose.material3.lightColorScheme
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.sp
+import com.example.nfccardtaptopayv101.R
 
-private val DarkColorScheme = darkColorScheme(
-    primary = Purple80,
-    secondary = PurpleGrey80,
-    tertiary = Pink80
-)
+// -------------- COLORS ------------------
 
-private val LightColorScheme = lightColorScheme(
-    primary = Purple40,
-    secondary = PurpleGrey40,
-    tertiary = Pink40
-
-    /* Other default colors to override
-    background = Color(0xFFFFFBFE),
-    surface = Color(0xFFFFFBFE),
+private val LightColors = lightColorScheme(
+    primary = Color(0xFF3D5AFE),         // Indigo A700
+    secondary = Color(0xFF00C853),       // Green A700
+    background = Color(0xFFFDFDFD),       // Off-white
+    surface = Color.White,
     onPrimary = Color.White,
     onSecondary = Color.White,
-    onTertiary = Color.White,
-    onBackground = Color(0xFF1C1B1F),
-    onSurface = Color(0xFF1C1B1F),
-    */
+    onBackground = Color(0xFF121212),
+    onSurface = Color(0xFF121212),
 )
+
+private val DarkColors = darkColorScheme(
+    primary = Color(0xFF536DFE),         // Indigo 400
+    secondary = Color(0xFF00E676),       // Green A400
+    background = Color(0xFF121212),
+    surface = Color(0xFF1E1E1E),
+    onPrimary = Color.Black,
+    onSecondary = Color.Black,
+    onBackground = Color.White,
+    onSurface = Color.White,
+)
+
+// -------------- TYPOGRAPHY ------------------
+
+// Replace with your fonts if needed
+//private val Inter = FontFamily(
+//    Font(R.font.inter_regular, FontWeight.Normal),
+//    Font(R.font.inter_bold, FontWeight.Bold)
+//)
+//
+//private val AppTypography = Typography(
+//    displayLarge = TextStyle(
+//        fontFamily = Inter,
+//        fontWeight = FontWeight.Bold,
+//        fontSize = 48.sp,
+//        lineHeight = 54.sp
+//    ),
+//    headlineMedium = TextStyle(
+//        fontFamily = Inter,
+//        fontWeight = FontWeight.SemiBold,
+//        fontSize = 24.sp
+//    ),
+//    bodyLarge = TextStyle(
+//        fontFamily = Inter,
+//        fontWeight = FontWeight.Normal,
+//        fontSize = 16.sp
+//    ),
+//    labelLarge = TextStyle(
+//        fontFamily = Inter,
+//        fontWeight = FontWeight.Medium,
+//        fontSize = 14.sp
+//    )
+//)
+
+// -------------- THEME WRAPPER ------------------
 
 @Composable
 fun NFCCardTapToPayV101Theme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    // Dynamic color is available on Android 12+
-    dynamicColor: Boolean = true,
     content: @Composable () -> Unit
 ) {
-    val colorScheme = when {
-      dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-        val context = LocalContext.current
-        if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-      }
-      darkTheme -> DarkColorScheme
-      else -> LightColorScheme
-    }
+    val colors = if (darkTheme) DarkColors else LightColors
 
     MaterialTheme(
-      colorScheme = colorScheme,
-      typography = Typography,
-      content = content
+        colorScheme = colors,
+        typography = Typography,
+        content = content
     )
 }

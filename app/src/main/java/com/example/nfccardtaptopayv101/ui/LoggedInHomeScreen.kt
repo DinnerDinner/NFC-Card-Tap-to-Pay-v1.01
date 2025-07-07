@@ -1,5 +1,7 @@
+@file:OptIn(ExperimentalMaterial3Api::class)
+
 package com.example.nfccardtaptopayv101.ui
-import androidx.compose.material3.TopAppBar
+
 import android.content.Context
 import android.content.Intent
 import androidx.compose.foundation.layout.*
@@ -11,16 +13,51 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.example.nfccardtaptopayv101.LoginActivity
+import com.example.nfccardtaptopayv101.MerchantActivity
 import kotlinx.coroutines.launch
-//@file:OptIn(ExperimentalMaterial3Api::class)
+import androidx.compose.ui.Alignment
 
-@OptIn(ExperimentalMaterial3Api::class)
+// --- Logic + State Holder ---
 @Composable
-fun LoggedInHomeScreen(userData: String) {
+fun LoggedInHomeScreen(
+    userData: String,
+    startOnProfile: Boolean = false
+) {
+    var selectedScreen by remember { mutableStateOf(if (startOnProfile) "Profile" else "Profile") }
     val drawerState = rememberDrawerState(DrawerValue.Closed)
     val scope = rememberCoroutineScope()
-    var selectedScreen by remember { mutableStateOf("Profile") }
     val context = LocalContext.current
+
+    // Function to handle logout
+    fun logout() {
+        context.getSharedPreferences("user_prefs", Context.MODE_PRIVATE)
+            .edit()
+            .clear()
+            .apply()
+        context.startActivity(Intent(context, LoginActivity::class.java))
+    }
+
+    // Pass everything to pure UI
+    LoggedInHomeScreenUI(
+        drawerState = drawerState,
+        selectedScreen = selectedScreen,
+        onScreenSelected = { screen ->
+            selectedScreen = screen
+            scope.launch { drawerState.close() }
+        },
+        onLogout = { logout() }
+    )
+}
+
+// --- Pure UI / Design only, no logic ---
+@Composable
+fun LoggedInHomeScreenUI(
+    drawerState: DrawerState,
+    selectedScreen: String,
+    onScreenSelected: (String) -> Unit,
+    onLogout: () -> Unit
+) {
+    val scope = rememberCoroutineScope()
 
     val menuItems = listOf(
         "Profile" to Icons.Default.AccountCircle,
@@ -46,10 +83,7 @@ fun LoggedInHomeScreen(userData: String) {
                     NavigationDrawerItem(
                         label = { Text(label) },
                         selected = selectedScreen == label,
-                        onClick = {
-                            selectedScreen = label
-                            scope.launch { drawerState.close() }
-                        },
+                        onClick = { onScreenSelected(label) },
                         icon = { Icon(imageVector = icon, contentDescription = label) },
                         modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
                     )
@@ -57,14 +91,11 @@ fun LoggedInHomeScreen(userData: String) {
 
                 Spacer(modifier = Modifier.weight(1f))
                 Divider()
+
                 NavigationDrawerItem(
                     label = { Text("Log Out") },
                     selected = false,
-                    onClick = {
-                        context.getSharedPreferences("user_prefs", Context.MODE_PRIVATE)
-                            .edit().clear().apply()
-                        context.startActivity(Intent(context, LoginActivity::class.java))
-                    },
+                    onClick = onLogout,
                     icon = { Icon(Icons.Default.ExitToApp, contentDescription = "Logout") },
                     modifier = Modifier.padding(16.dp)
                 )
@@ -88,7 +119,7 @@ fun LoggedInHomeScreen(userData: String) {
             Box(modifier = Modifier.padding(padding).fillMaxSize()) {
                 when (selectedScreen) {
                     "Profile" -> ProfileScreen()
-                    "Merchant Tap Machine" -> MerchantScreen()
+                    "Merchant Tap Machine" -> LaunchMerchantActivity()
                     "Cards" -> CardsScreen()
                     "Wallet Top-Up" -> WalletTopUpScreen()
                     "Product Database" -> ProductDatabaseScreen()
@@ -98,51 +129,18 @@ fun LoggedInHomeScreen(userData: String) {
     }
 }
 
+@Composable
+fun LaunchMerchantActivity() {
+    val context = LocalContext.current
 
+    LaunchedEffect(Unit) {
+        context.startActivity(Intent(context, MerchantActivity::class.java))
+    }
 
-
-
-
-
-
-
-
-//package com.example.nfccardtaptopayv101.ui
-//
-//import android.content.Context
-//import android.content.Intent
-//import androidx.compose.material3.*
-//import androidx.compose.runtime.Composable
-//import androidx.compose.ui.platform.LocalContext
-//import androidx.compose.foundation.layout.*
-//import androidx.compose.ui.Modifier
-//import androidx.compose.ui.unit.dp
-//import com.example.nfccardtaptopayv101.LoginActivity
-//
-//@Composable
-//fun LoggedInHomeScreen(userData: String) {
-//    val context = LocalContext.current
-//
-//    Column(modifier = Modifier
-//        .fillMaxSize()
-//        .padding(24.dp),
-//        verticalArrangement = Arrangement.Center
-//    ) {
-//        Text(text = "Welcome back!\nUser data:\n$userData")
-//
-//        Spacer(modifier = Modifier.height(24.dp))
-//
-//        Button(onClick = {
-//            // Clear saved user data (logout)
-//            val prefs = context.getSharedPreferences("user_prefs", Context.MODE_PRIVATE)
-//            prefs.edit().clear().apply()
-//
-//            // Navigate back to LoginActivity
-//            val intent = Intent(context, LoginActivity::class.java)
-//            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-//            context.startActivity(intent)
-//        }) {
-//            Text("Logout")
-//        }
-//    }
-//}
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        Text("Opening Merchant Tap Machine...")
+    }
+}

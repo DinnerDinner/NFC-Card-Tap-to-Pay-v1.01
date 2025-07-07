@@ -142,25 +142,20 @@ def purchase(payload: PurchasePayload, db: Session = Depends(get_db)):
     3.  Move `amount` dollars from customer to merchant.
     """
     if payload.amount <= 0:
-        raise HTTPException(status_code=400, detail="Amount must be positive")
-
-    # --- Locate customer (tapped card) -------------------------------------
+        raise HTTPException(status_code=400, detail="❌ Payment failed\nAmount must be positive")
     customer = db.query(User).filter(User.card_uid == payload.uid).first()
     if not customer:
-        raise HTTPException(status_code=404, detail="Customer card not found")
-
-    # --- Locate merchant ----------------------------------------------------
+        raise HTTPException(status_code=404, detail="❌ Payment failed\nCustomer card not found")
     merchant_email = payload.merchant_email.lower()
     merchant = db.query(User).filter(User.email == merchant_email).first()
     if not merchant:
-        raise HTTPException(status_code=404, detail="Merchant not found")
-
-    # --- Funds check --------------------------------------------------------
+        raise HTTPException(status_code=404, detail="❌ Payment failed\nMerchant not found")
     cents = int(round(payload.amount * 100))
+    if customer.card_uid == merchant.card_uid:
+        raise HTTPException(status_code=400, detail="❌ Payment failed\nMerchant may not tap their own card")
     if customer.balance_cents < cents:
-        raise HTTPException(status_code=400, detail="Customer has insufficient funds")
+        raise HTTPException(status_code=400, detail="❌ Payment failed\nCustomer has insufficient funds")
 
-    # --- Transfer -----------------------------------------------------------
     customer.balance_cents -= cents
     merchant.balance_cents += cents
     db.commit()
