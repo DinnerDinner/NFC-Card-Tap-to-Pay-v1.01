@@ -85,7 +85,7 @@ private fun fetchProfile(context: Context, onResult: (JSONObject?) -> Unit) {
     val mediaType = "application/json".toMediaType()
     val requestBody = json.toString().toRequestBody(mediaType)
     val request = Request.Builder()
-        .url("https://b3bf-207-253-242-126.ngrok-free.app/profile")
+        .url("https://ec42a9411756.ngrok-free.app/profile")
         .post(requestBody)
         .build()
 

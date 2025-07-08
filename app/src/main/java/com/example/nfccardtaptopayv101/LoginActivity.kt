@@ -121,7 +121,7 @@ class LoginActivity : ComponentActivity() {
                         }
                         val body = json.toString().toRequestBody(mediaType)
                         val request = Request.Builder()
-                            .url("https://b3bf-207-253-242-126.ngrok-free.app/login") // Your backend login URL
+                            .url("https://ec42a9411756.ngrok-free.app/login") // Your backend login URL
                             .post(body)
                             .build()
 

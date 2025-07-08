@@ -74,7 +74,7 @@ class SignUpActivity : ComponentActivity() {
             val body = pendingJson.toString()
                 .toRequestBody("application/json".toMediaType())
             val request = Request.Builder()
-                .url("https://b3bf-207-253-242-126.ngrok-free.app/register_user/")
+                .url("https://ec42a9411756.ngrok-free.app/register_user/")
                 .post(body)
                 .build()
 

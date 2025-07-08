@@ -91,7 +91,7 @@ class MerchantActivity : ComponentActivity() {
         lifecycleScope.launch(Dispatchers.IO) {
             val body = json.toString().toRequestBody("application/json".toMediaType())
             val request = Request.Builder()
-                .url("https://b3bf-207-253-242-126.ngrok-free.app/purchase")
+                .url("https://ec42a9411756.ngrok-free.app/purchase")
                 .post(body)
                 .build()
 
