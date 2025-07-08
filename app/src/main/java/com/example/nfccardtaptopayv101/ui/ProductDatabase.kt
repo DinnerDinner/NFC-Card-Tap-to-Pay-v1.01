@@ -5,6 +5,6 @@ import androidx.compose.runtime.Composable
 
 @Composable
 fun ProductDatabaseScreen() {
-    Text("Product Database screen")
+    Text("Product Database screen; LET'S BUILD A FUCKING POS SYSTEM")
 }
 
