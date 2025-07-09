@@ -43,10 +43,10 @@ class UserRegistrationPayload(BaseModel):
 
 @app.post("/register_user/")
 def register_user(payload: UserRegistrationPayload, db: Session = Depends(get_db)):
-    clean_phone_number = clean_phone_number(payload.phone_number)
+    cleanup_phone_number = clean_phone_number(payload.phone_number)
     if db.query(User).filter(User.email == payload.email).first():
         raise HTTPException(status_code=400, detail="Email already exists")
-    if db.query(User).filter(User.phone_number == clean_phone_number).first():
+    if db.query(User).filter(User.phone_number == cleanup_phone_number).first():
         raise HTTPException(status_code=400, detail="Phone number already exists")
 
     balance_cents = random.randint(0, 100000)
@@ -55,7 +55,7 @@ def register_user(payload: UserRegistrationPayload, db: Session = Depends(get_db
         first_name=payload.first_name,
         last_name=payload.last_name,
         email=email,
-        phone_number=clean_phone_number,
+        phone_number=cleanup_phone_number,
         dob=payload.dob,
         password_hash=payload.password,  
         card_uid=payload.card_uid,
