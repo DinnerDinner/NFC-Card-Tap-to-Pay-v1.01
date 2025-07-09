@@ -1,5 +1,4 @@
 package com.example.nfccardtaptopayv101.ui.theme
-
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -11,12 +10,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import com.example.nfccardtaptopayv101.R
 
-// -------------- COLORS ------------------
-
 private val LightColors = lightColorScheme(
-    primary = Color(0xFF3D5AFE),         // Indigo A700
-    secondary = Color(0xFF00C853),       // Green A700
-    background = Color(0xFFFDFDFD),       // Off-white
+    primary = Color(0xFF3D5AFE),
+    secondary = Color(0xFF00C853),
+    background = Color(0xFFFDFDFD),
     surface = Color.White,
     onPrimary = Color.White,
     onSecondary = Color.White,
@@ -25,8 +22,8 @@ private val LightColors = lightColorScheme(
 )
 
 private val DarkColors = darkColorScheme(
-    primary = Color(0xFF536DFE),         // Indigo 400
-    secondary = Color(0xFF00E676),       // Green A400
+    primary = Color(0xFF536DFE),
+    secondary = Color(0xFF00E676),
     background = Color(0xFF121212),
     surface = Color(0xFF1E1E1E),
     onPrimary = Color.Black,
@@ -35,39 +32,36 @@ private val DarkColors = darkColorScheme(
     onSurface = Color.White,
 )
 
-// -------------- TYPOGRAPHY ------------------
+// 1. Define font family with your new Consent font(s)
+val Quicksand = FontFamily(
+    Font(R.font.quicksand_regular, FontWeight.Normal),
+    Font(R.font.quicksand_bold, FontWeight.Bold)// <-- changed here from Inter to Consent, also updated font file and weight accordingly
+)
 
-// Replace with your fonts if needed
-//private val Inter = FontFamily(
-//    Font(R.font.inter_regular, FontWeight.Normal),
-//    Font(R.font.inter_bold, FontWeight.Bold)
-//)
-//
-//private val AppTypography = Typography(
-//    displayLarge = TextStyle(
-//        fontFamily = Inter,
-//        fontWeight = FontWeight.Bold,
-//        fontSize = 48.sp,
-//        lineHeight = 54.sp
-//    ),
-//    headlineMedium = TextStyle(
-//        fontFamily = Inter,
-//        fontWeight = FontWeight.SemiBold,
-//        fontSize = 24.sp
-//    ),
-//    bodyLarge = TextStyle(
-//        fontFamily = Inter,
-//        fontWeight = FontWeight.Normal,
-//        fontSize = 16.sp
-//    ),
-//    labelLarge = TextStyle(
-//        fontFamily = Inter,
-//        fontWeight = FontWeight.Medium,
-//        fontSize = 14.sp
-//    )
-//)
+val AppTypography = Typography(
+    displayLarge = TextStyle(
+        fontFamily = Quicksand,   // <-- changed here: was Inter
+        fontWeight = FontWeight.Bold, // adjust weight if needed, was Black before
+        fontSize = 48.sp,
+        lineHeight = 54.sp
+    ),
+    headlineMedium = TextStyle(
+        fontFamily = Quicksand,   // <-- changed here
+        fontWeight = FontWeight.SemiBold,
+        fontSize = 24.sp
+    ),
+    bodyLarge = TextStyle(
+        fontFamily = Quicksand,   // <-- changed here
+        fontWeight = FontWeight.Normal,
+        fontSize = 16.sp
+    ),
+    labelLarge = TextStyle(
+        fontFamily = Quicksand,   // <-- changed here
+        fontWeight = FontWeight.Bold,
+        fontSize = 14.sp
+    )
+)
 
-// -------------- THEME WRAPPER ------------------
 
 @Composable
 fun NFCCardTapToPayV101Theme(
@@ -78,7 +72,7 @@ fun NFCCardTapToPayV101Theme(
 
     MaterialTheme(
         colorScheme = colors,
-        typography = Typography,
+        typography = AppTypography,
         content = content
     )
 }

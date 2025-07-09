@@ -30,7 +30,7 @@ import org.json.JSONObject
 
 private enum class ScreenState { ENTER_AMOUNT, WAIT_TAP, SUCCESS }
 
-class MerchantActivity : ComponentActivity() {
+class TaptoTransferMachine : ComponentActivity() {
 
     private var nfcAdapter: NfcAdapter? = null
     private val client = OkHttpClient()
@@ -91,7 +91,7 @@ class MerchantActivity : ComponentActivity() {
         lifecycleScope.launch(Dispatchers.IO) {
             val body = json.toString().toRequestBody("application/json".toMediaType())
             val request = Request.Builder()
-                .url("https://ec42a9411756.ngrok-free.app/purchase")
+                .url("https://promoted-quetzal-visually.ngrok-free.app/transfer")
                 .post(body)
                 .build()
 

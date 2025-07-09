@@ -17,7 +17,7 @@ lt --port 8000 --subdomain nfcwalletdev  # Try reusing this every time
 
 IN CASE LOCAL TUNNEL NU BUENO -- To start the ngrok:
 cd into C: only
-ngrok http 8000
+ngrok http --url=promoted-quetzal-visually.ngrok-free.app 8000  
 
 Take the ngrok url and plug into .url() in MainActivity.kt in Android Studio app and reBuild
 

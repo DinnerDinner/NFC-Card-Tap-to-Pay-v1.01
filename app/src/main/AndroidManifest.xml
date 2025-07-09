@@ -19,7 +19,7 @@
         android:theme="@style/Theme.NFCCardTapToPayV101" >
         <activity android:name=".SignUpActivity" />
         <activity android:name=".LoginActivity" />
-        <activity android:name=".MerchantActivity" />
+        <activity android:name=".TaptoTransferMachine" />
 
         <activity
             android:name=".MainActivity"

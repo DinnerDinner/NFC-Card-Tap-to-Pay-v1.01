@@ -13,7 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.example.nfccardtaptopayv101.LoginActivity
-import com.example.nfccardtaptopayv101.MerchantActivity
+import com.example.nfccardtaptopayv101.TaptoTransferMachine
 import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 
@@ -61,10 +61,9 @@ fun LoggedInHomeScreenUI(
 
     val menuItems = listOf(
         "Profile" to Icons.Default.AccountCircle,
-        "Merchant Tap Machine" to Icons.Default.PointOfSale,
-        "Cards" to Icons.Default.CreditCard,
-        "Wallet Top-Up" to Icons.Default.AccountBalanceWallet,
-        "Product Database" to Icons.Default.List
+        "Tap to Transfer Machine" to Icons.Default.PointOfSale,
+        "Emulated Cards' Wallet" to Icons.Default.CreditCard,
+        "mPOS System" to Icons.Default.List
     )
 
     ModalNavigationDrawer(
@@ -73,7 +72,7 @@ fun LoggedInHomeScreenUI(
             ModalDrawerSheet(modifier = Modifier.width(250.dp)) {
                 Spacer(Modifier.height(16.dp))
                 Text(
-                    "🏦 Menu",
+                    " ",
                     style = MaterialTheme.typography.headlineSmall,
                     modifier = Modifier.padding(16.dp)
                 )
@@ -119,10 +118,9 @@ fun LoggedInHomeScreenUI(
             Box(modifier = Modifier.padding(padding).fillMaxSize()) {
                 when (selectedScreen) {
                     "Profile" -> ProfileScreen()
-                    "Merchant Tap Machine" -> LaunchMerchantActivity()
-                    "Cards" -> CardsScreen()
-                    "Wallet Top-Up" -> WalletTopUpScreen()
-                    "Product Database" -> ProductDatabaseScreen()
+                    "Tap to Transfer Machine" -> LaunchTransferActivity()
+                    "Emulated Cards' Wallet" -> CardsScreen()
+                    "mPOS System" -> ProductDatabaseScreen()
                 }
             }
         }
@@ -130,11 +128,11 @@ fun LoggedInHomeScreenUI(
 }
 
 @Composable
-fun LaunchMerchantActivity() {
+fun LaunchTransferActivity() {
     val context = LocalContext.current
 
     LaunchedEffect(Unit) {
-        context.startActivity(Intent(context, MerchantActivity::class.java))
+        context.startActivity(Intent(context, TaptoTransferMachine::class.java))
     }
 
     Box(
