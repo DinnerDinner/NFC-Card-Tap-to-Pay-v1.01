@@ -72,7 +72,7 @@ def register_user(payload: UserRegistrationPayload, db: Session = Depends(get_db
     db.refresh(user)
 
     return {
-        "message": "✅ User signedup successfully. Restart app",
+        "message": "✅ User SignedUp successfully. Please LogIn",
         "user_id": user.id,
         "balance_dollars": balance_cents / 100
     }

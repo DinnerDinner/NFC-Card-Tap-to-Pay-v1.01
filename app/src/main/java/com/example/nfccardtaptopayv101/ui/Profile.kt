@@ -1,14 +1,19 @@
 package com.example.nfccardtaptopayv101.ui
 
+import android.app.DatePickerDialog
 import android.content.Context
 import android.widget.Toast
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.CoroutineScope
@@ -18,6 +23,7 @@ import okhttp3.*
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONObject
+import java.util.*
 
 @Composable
 fun ProfileScreen() {
@@ -65,37 +71,23 @@ fun ProfileScreen() {
                 EditableField("First Name", firstName, isEditing) { firstName = it }
                 EditableField("Last Name", lastName, isEditing) { lastName = it }
 
-                // Email - always text, never editable
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-                ) {
-                    Column(Modifier.padding(12.dp)) {
-                        Text("Email", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
-                        Spacer(Modifier.height(4.dp))
-                        Text(email, style = MaterialTheme.typography.bodyLarge)
-                    }
-                }
+                // Email - not editable
+                StaticField("Email", email)
 
                 EditableField("Phone Number", phoneNumber, isEditing) { phoneNumber = it }
-                EditableField("Date of Birth", dob, isEditing) { dob = it }
 
-                // Balance - always text, never editable
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-                ) {
-                    Column(Modifier.padding(12.dp)) {
-                        Text("Balance", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
-                        Spacer(Modifier.height(4.dp))
-                        Text(balance, style = MaterialTheme.typography.bodyLarge)
-                    }
-                }
+                // Date of Birth - only editable via calendar
+                DateOfBirthPicker(dob, isEditing) { dob = it }
+
+                // Balance - not editable
+                StaticField("Balance", balance)
 
                 EditableField("Card UID", cardUid, isEditing) { cardUid = it }
-                EditableField("Cadet", isCadet, isEditing) { isCadet = it }
-                EditableField("Student", isStudent, isEditing) { isStudent = it }
-                EditableField("Patient", isHospitalUser, isEditing) { isHospitalUser = it }
+
+                // Cadet, Student, Patient - not editable
+                StaticField("Cadet", isCadet)
+                StaticField("Student", isStudent)
+                StaticField("Patient", isHospitalUser)
 
                 Spacer(modifier = Modifier.height(12.dp))
 
@@ -104,10 +96,10 @@ fun ProfileScreen() {
                         val updatedJson = JSONObject().apply {
                             put("first_name", firstName)
                             put("last_name", lastName)
-                            put("email", email)  // send unchanged email
+                            put("email", email)
                             put("phone_number", phoneNumber)
                             put("dob", dob)
-                            put("balance", balance.toDoubleOrNull() ?: 0.0) // sending balance unchanged
+                            put("balance", balance.toDoubleOrNull() ?: 0.0)
                             put("card_uid", cardUid)
                             put("is_cadet", isCadet)
                             put("is_student", isStudent)
@@ -150,6 +142,66 @@ fun EditableField(label: String, value: String, isEditing: Boolean, onValueChang
     }
 }
 
+@Composable
+fun StaticField(label: String, value: String) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+    ) {
+        Column(Modifier.padding(12.dp)) {
+            Text(label, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
+            Spacer(Modifier.height(4.dp))
+            Text(value, style = MaterialTheme.typography.bodyLarge)
+        }
+    }
+}
+
+@Composable
+fun DateOfBirthPicker(dob: String, isEditing: Boolean, onDateChange: (String) -> Unit) {
+    val context = LocalContext.current
+    val calendar = Calendar.getInstance()
+
+    val year = try { dob.substring(0, 4).toInt() } catch (e: Exception) { calendar.get(Calendar.YEAR) }
+    val month = try { dob.substring(5, 7).toInt() - 1 } catch (e: Exception) { calendar.get(Calendar.MONTH) }
+    val day = try { dob.substring(8, 10).toInt() } catch (e: Exception) { calendar.get(Calendar.DAY_OF_MONTH) }
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+    ) {
+        Column(
+            Modifier
+                .fillMaxWidth()
+                .clickable(enabled = isEditing) {
+                    DatePickerDialog(
+                        context,
+                        { _, selectedYear, selectedMonth, selectedDay ->
+                            val newDob = "%04d-%02d-%02d".format(selectedYear, selectedMonth + 1, selectedDay)
+                            onDateChange(newDob)
+                        },
+                        year,
+                        month,
+                        day
+                    ).show()
+                }
+                .padding(12.dp)
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text("Date of Birth", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
+                    Spacer(Modifier.height(4.dp))
+                    Text(dob, style = MaterialTheme.typography.bodyLarge)
+                }
+                Icon(
+                    imageVector = Icons.Default.CalendarToday,
+                    contentDescription = "Pick date",
+                    tint = if (isEditing) MaterialTheme.colorScheme.primary else Color.Gray
+                )
+            }
+        }
+    }
+}
+
 private fun sendUpdateRequest(context: Context, data: JSONObject) {
     val client = OkHttpClient()
     val mediaType = "application/json".toMediaType()
@@ -163,7 +215,6 @@ private fun sendUpdateRequest(context: Context, data: JSONObject) {
         try {
             client.newCall(request).execute().use { response ->
                 val responseText = response.body?.string() ?: ""
-
                 CoroutineScope(Dispatchers.Main).launch {
                     if (response.isSuccessful) {
                         Toast.makeText(context, "Profile updated successfully.", Toast.LENGTH_SHORT).show()
@@ -174,7 +225,7 @@ private fun sendUpdateRequest(context: Context, data: JSONObject) {
                         } catch (e: Exception) {
                             responseText.ifBlank { "Failed to update profile." }
                         }
-                        Toast.makeText(context, "$errorMessage", Toast.LENGTH_LONG).show()
+                        Toast.makeText(context, errorMessage, Toast.LENGTH_LONG).show()
                     }
                 }
             }

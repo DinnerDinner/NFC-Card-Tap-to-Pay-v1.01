@@ -41,7 +41,6 @@ class SignUpActivity : ComponentActivity() {
         }
     }
 
-    // ---------- NFC foreground dispatch ----------
     override fun onResume() {
         super.onResume()
         val pi = PendingIntent.getActivity(
@@ -59,7 +58,6 @@ class SignUpActivity : ComponentActivity() {
         nfcAdapter?.disableForegroundDispatch(this)
     }
 
-    // ---------- Receive card tap ----------
     override fun onNewIntent(intent: Intent?) {
         super.onNewIntent(intent)
         if (!isWaitingForCard || pendingJson == null) return
@@ -68,7 +66,7 @@ class SignUpActivity : ComponentActivity() {
         val uid = tag?.id?.joinToString("") { "%02X".format(it) } ?: return
 
         pendingJson?.put("card_uid", uid)
-        isWaitingForCard = false       // block double‑reads
+        isWaitingForCard = false
 
         lifecycleScope.launch(Dispatchers.IO) {
             val body = pendingJson.toString()
@@ -88,6 +86,14 @@ class SignUpActivity : ComponentActivity() {
                     withContext(Dispatchers.Main) {
                         Toast.makeText(this@SignUpActivity, msg, Toast.LENGTH_LONG).show()
                         pendingJson = null
+
+                        if (resp.isSuccessful) {
+                            // ✅ Go back to Login screen (MainActivity)
+                            val intent = Intent(this@SignUpActivity, LoginActivity::class.java)
+                            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                            startActivity(intent)
+                            finish()
+                        }
                     }
                 }
             } catch (_: Exception) {
@@ -99,3 +105,5 @@ class SignUpActivity : ComponentActivity() {
         }
     }
 }
+
+
