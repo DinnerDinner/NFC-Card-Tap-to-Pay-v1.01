@@ -27,7 +27,6 @@ fun LoggedInHomeScreen(
     val drawerState = rememberDrawerState(DrawerValue.Closed)
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
-
     // Function to handle logout
     fun logout() {
         context.getSharedPreferences("user_prefs", Context.MODE_PRIVATE)
@@ -66,6 +65,9 @@ fun LoggedInHomeScreenUI(
         "mPOS System" to Icons.Default.List
     )
 
+
+    val docUrl = "https://docs.google.com/document/d/1QQD2LfHxB9PL7WVrrD_x2Aro4eLrwzwWUdVPxt8dofc/edit?usp=sharing"
+
     ModalNavigationDrawer(
         drawerState = drawerState,
         drawerContent = {
@@ -90,6 +92,16 @@ fun LoggedInHomeScreenUI(
 
                 Spacer(modifier = Modifier.weight(1f))
                 Divider()
+
+                val context = LocalContext.current
+
+                NavigationDrawerItem(
+                    label = { Text("Latest Release Docs") },
+                    selected = false,
+                    onClick = { openPdfInBrowser(context, docUrl) },
+                    icon = { Icon(Icons.Default.Description, contentDescription = "Docs") },
+                    modifier = Modifier.padding(16.dp)
+                )
 
                 NavigationDrawerItem(
                     label = { Text("Log Out") },
@@ -141,4 +153,12 @@ fun LaunchTransferActivity() {
     ) {
         Text("Opening Merchant Tap Machine...")
     }
+}
+
+fun openPdfInBrowser(context: Context, url: String) {
+    val intent = Intent(Intent.ACTION_VIEW).apply {
+        data = android.net.Uri.parse(url)
+        flags = Intent.FLAG_ACTIVITY_NEW_TASK
+    }
+    context.startActivity(intent)
 }
