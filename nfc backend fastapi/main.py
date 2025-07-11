@@ -254,4 +254,4 @@ def transfer(payload: PurchasePayload, db: Session = Depends(get_db)):
 
 
 print("V1 Achieved")
-print("I wrote the docs for mPOS")
+print("I shall sleep now, i just want a green square on github")
