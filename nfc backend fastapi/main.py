@@ -1,3 +1,4 @@
+print("V2 Started!! WITH MPOS SYSTEM!!!")
 import random
 from datetime import date, datetime
 from fastapi import FastAPI, Depends, HTTPException, status
@@ -254,4 +255,3 @@ def transfer(payload: PurchasePayload, db: Session = Depends(get_db)):
 
 
 print("V1 Achieved")
-print("I shall sleep now, i just want a green square on github")
