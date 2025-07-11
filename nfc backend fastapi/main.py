@@ -254,3 +254,4 @@ def transfer(payload: PurchasePayload, db: Session = Depends(get_db)):
 
 
 print("V1 Achieved")
+print("i didnt code today but i dont wanna lose my streak")
