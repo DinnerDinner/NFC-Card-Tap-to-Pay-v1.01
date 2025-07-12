@@ -131,6 +131,12 @@ class LoginActivity : ComponentActivity() {
                                 if (response.isSuccessful) {
                                     // Successful login, pass user JSON to callback
                                     withContext(Dispatchers.Main) {
+                                        val json = JSONObject(responseBody)
+                                        val prefs = getSharedPreferences("user_prefs", Context.MODE_PRIVATE)
+                                        prefs.edit()
+                                            .putString("user_data", json.toString())
+                                            .putInt("user_id", json.optInt("user_id", -1))
+                                            .apply()
                                         onLoginSuccess(responseBody)
                                     }
                                 } else {

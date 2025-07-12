@@ -4,12 +4,14 @@ from datetime import date, datetime
 from fastapi import FastAPI, Depends, HTTPException, status
 from pydantic import BaseModel, EmailStr
 from sqlalchemy.orm import Session
-
+from fastapi import Request
 from db_files.database import SessionLocal, engine, Base
 from db_files.models import User
 from pydantic import BaseModel, EmailStr, validator
 from datetime import date
 import re
+from db_files.models import Business, Product 
+
 
 
 
@@ -116,8 +118,8 @@ def login(payload: UserLoginPayload, db: Session = Depends(get_db)):
 
 @app.post("/profile")
 def get_profile(payload: dict, db: Session = Depends(get_db)):
-    email = payload.get("email")
-    user = db.query(User).filter(User.email == email).first()
+    user_id = payload.get("user_id")
+    user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     return {
@@ -137,6 +139,7 @@ def get_profile(payload: dict, db: Session = Depends(get_db)):
 
 
 class UserUpdatePayload(BaseModel):
+    user_id: int
     first_name: str
     last_name: str
     email: EmailStr
@@ -163,12 +166,16 @@ from fastapi import Body
 
 @app.post("/update-profile")
 def update_profile(payload: UserUpdatePayload = Body(...), db: Session = Depends(get_db)):
-    user = db.query(User).filter(User.email == payload.email).first()
+    user = db.query(User).filter(User.id == payload.user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
     # Check for unique email if email changed - (if email can be changed, adjust logic)
-    # Here, we assume email is unique and fixed; if changeable, you'd handle it differently.
+    if user.email != payload.email:
+        email_exists = db.query(User).filter(User.email == payload.email).first()
+        if email_exists:
+            raise HTTPException(status_code=400, detail="Email already exists")
+
 
     # Check phone_number uniqueness (exclude current user)
     phone_number = clean_phone_number(payload.phone_number)
@@ -184,7 +191,7 @@ def update_profile(payload: UserUpdatePayload = Body(...), db: Session = Depends
     # Update fields
     user.first_name = payload.first_name
     user.last_name = payload.last_name
-    # user.email = payload.email  # Uncomment if email is changeable
+    user.email = payload.email  # Uncomment if email is changeable
     user.phone_number = phone_number
     user.dob = payload.dob
     user.card_uid = payload.card_uid
@@ -255,3 +262,52 @@ def transfer(payload: PurchasePayload, db: Session = Depends(get_db)):
 
 
 print("V1 Achieved")
+
+
+
+
+class BusinessSetupPayload(BaseModel):
+    user_id: int
+    business_name: str
+
+class BusinessSetupResponse(BaseModel):
+    business_id: int
+    business_name: str
+    owner_email: EmailStr
+    message: str
+
+@app.post("/business/setup", response_model=BusinessSetupResponse)
+def setup_business(payload: BusinessSetupPayload, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.id == payload.user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    existing_business = db.query(Business).filter(Business.owner_id == user.id).first()
+    if existing_business:
+        return BusinessSetupResponse(
+            business_id=existing_business.id,
+            business_name=existing_business.business_name,
+            owner_email=user.email,
+            message="Business already exists for this user"
+        )
+
+    new_business = Business(
+        owner_id=user.id,
+        business_name=payload.business_name
+    )
+    db.add(new_business)
+    db.commit()
+    db.refresh(new_business)
+
+    return BusinessSetupResponse(
+        business_id=new_business.id,
+        business_name=new_business.business_name,
+        owner_email=user.email,
+        message="Business successfully created"
+    )
+
+
+
+
+
+print("V2 Achieved")

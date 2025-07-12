@@ -4,6 +4,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from db_files.database import SessionLocal
 from db_files.models import User
 
+# USER CHECK DATABASE
 def print_all_users_with_card_uid():
     session = SessionLocal()
     try:
@@ -25,3 +26,83 @@ def print_all_users_with_card_uid():
 
 if __name__ == "__main__":
     print_all_users_with_card_uid()
+
+
+
+
+
+
+
+
+
+
+#PRODUCTS CHECK DATABASE
+# import sys
+
+# from db_files.database import SessionLocal
+# from db_files.models import Business, Product
+
+# def print_all_businesses_and_products():
+#     session = SessionLocal()
+#     try:
+#         businesses = session.query(Business).all()
+
+#         if not businesses:
+#             print("No businesses found in database.")
+#             return
+
+#         for biz in businesses:
+#             print(f"\n=== Business ID: {biz.id} | Name: {biz.business_name} | Owner User ID: {biz.owner_id} ===")
+            
+#             if not biz.products:
+#                 print("  No products for this business.")
+#                 continue
+
+#             for prod in biz.products:
+#                 print(
+#                     f"  - Product ID: {prod.id}\n"
+#                     f"    Title: {prod.title}\n"
+#                     f"    Price: ${prod.price:.2f}\n"
+#                     f"    SKU: {prod.sku}\n"
+#                     f"    Barcode: {prod.barcode_number}\n"
+#                     f"    Description: {prod.description}\n"
+#                     f"    Keywords: {prod.keywords}\n"
+#                     f"    Created at: {prod.created_at}\n"
+#                 )
+#     finally:
+#         session.close()
+
+# if __name__ == "__main__":
+#     print_all_businesses_and_products()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# from db_files.database import SessionLocal
+# from db_files.models import Business
+
+# def print_all_businesses():
+#     session = SessionLocal()
+#     try:
+#         businesses = session.query(Business).all()
+#         if not businesses:
+#             print("No businesses found in database.")
+#             return
+#         for biz in businesses:
+#             print(f"Business ID: {biz.id} | Name: {biz.business_name} | Owner User ID: {biz.owner_id} | Created at: {biz.created_at}")
+#     finally:
+#         session.close()
+
+# if __name__ == "__main__":
+#     print_all_businesses()

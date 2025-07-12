@@ -72,7 +72,7 @@ fun ProfileScreen() {
                 EditableField("Last Name", lastName, isEditing) { lastName = it }
 
                 // Email - not editable
-                StaticField("Email", email)
+                EditableField("Email", email, isEditing) { email = it }
 
                 EditableField("Phone Number", phoneNumber, isEditing) { phoneNumber = it }
 
@@ -90,7 +90,8 @@ fun ProfileScreen() {
                 StaticField("Patient", isHospitalUser)
 
                 Spacer(modifier = Modifier.height(12.dp))
-
+                val prefs = LocalContext.current.getSharedPreferences("user_prefs", Context.MODE_PRIVATE)
+                val userId = prefs.getInt("user_id", -1)
                 Button(onClick = {
                     if (isEditing) {
                         val updatedJson = JSONObject().apply {
@@ -105,7 +106,11 @@ fun ProfileScreen() {
                             put("is_student", isStudent)
                             put("is_hospital_user", isHospitalUser)
                         }
-                        sendUpdateRequest(context, updatedJson)
+                        if (userId != -1) {
+                            sendUpdateRequest(context, updatedJson, userId)
+                        } else {
+                            Toast.makeText(context, "User ID missing. Please log in again.", Toast.LENGTH_LONG).show()
+                        }
                     }
                     isEditing = !isEditing
                 }) {
@@ -202,9 +207,12 @@ fun DateOfBirthPicker(dob: String, isEditing: Boolean, onDateChange: (String) ->
     }
 }
 
-private fun sendUpdateRequest(context: Context, data: JSONObject) {
+private fun sendUpdateRequest(context: Context, data: JSONObject, userId: Int) {
     val client = OkHttpClient()
     val mediaType = "application/json".toMediaType()
+    val prefs = context.getSharedPreferences("user_prefs", Context.MODE_PRIVATE)
+    val userId = prefs.getInt("user_id", -1)  // -1 means missing
+    data.put("user_id", userId)
     val requestBody = data.toString().toRequestBody(mediaType)
     val request = Request.Builder()
         .url("https://promoted-quetzal-visually.ngrok-free.app/update-profile")
@@ -239,22 +247,15 @@ private fun sendUpdateRequest(context: Context, data: JSONObject) {
 
 private fun fetchProfile(context: Context, onResult: (JSONObject?) -> Unit) {
     val prefs = context.getSharedPreferences("user_prefs", Context.MODE_PRIVATE)
-    val userJson = prefs.getString("user_data", null)
-
-    if (userJson == null) {
-        onResult(null)
-        return
-    }
-
-    val email = try {
-        JSONObject(userJson).getString("email")
-    } catch (e: Exception) {
+    val userId = prefs.getInt("user_id", -1)
+    if (userId == -1) {
+        // user_id missing — no profile to fetch
         onResult(null)
         return
     }
 
     val json = JSONObject().apply {
-        put("email", email)
+        put("user_id", userId)
     }
 
     val client = OkHttpClient()
@@ -269,9 +270,9 @@ private fun fetchProfile(context: Context, onResult: (JSONObject?) -> Unit) {
         try {
             client.newCall(request).execute().use { response ->
                 val responseText = response.body?.string()
-                val json = responseText?.let { JSONObject(it) }
+                val jsonResponse = responseText?.let { JSONObject(it) }
                 CoroutineScope(Dispatchers.Main).launch {
-                    onResult(json)
+                    onResult(jsonResponse)
                 }
             }
         } catch (e: Exception) {

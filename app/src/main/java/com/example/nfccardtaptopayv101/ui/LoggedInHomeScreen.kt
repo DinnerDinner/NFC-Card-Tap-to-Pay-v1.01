@@ -16,6 +16,7 @@ import com.example.nfccardtaptopayv101.LoginActivity
 import com.example.nfccardtaptopayv101.TaptoTransferMachine
 import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
+import com.example.nfccardtaptopayv101.ui.BusinessSetupScreen
 
 // --- Logic + State Holder ---
 @Composable
@@ -132,7 +133,7 @@ fun LoggedInHomeScreenUI(
                     "Profile" -> ProfileScreen()
                     "Tap to Transfer Machine" -> LaunchTransferActivity()
                     "Emulated Cards' Wallet" -> CardsScreen()
-                    "mPOS System" -> ProductDatabaseScreen()
+                    "mPOS System" -> BusinessSetupScreen()
                 }
             }
         }
