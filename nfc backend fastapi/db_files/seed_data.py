@@ -135,7 +135,7 @@ def create_user_with_business_and_products(card_uid: str, session: Session):
     session.commit()
     print(
         f"✔ Seeded user ({user.email}), business ({biz.business_name}) "
-        f"and 3 products — UID {card_uid}"
+        f"and 5 products — UID {card_uid}"
     )
 
 # ─────────────────────────────────────────────

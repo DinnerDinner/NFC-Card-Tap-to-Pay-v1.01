@@ -1,4 +1,9 @@
 print("V2 Started!! WITH MPOS SYSTEM!!!")
+
+
+from typing import Annotated
+from pydantic import BaseModel, Field
+from decimal import Decimal
 import random
 from datetime import date, datetime
 from fastapi import FastAPI, Depends, HTTPException, status
@@ -355,6 +360,59 @@ def list_products(payload: ProductsListRequest, db: Session = Depends(get_db)):
     products = db.query(Product).filter(Product.business_id == business.id).all()
     return products
 
+
+
+
+
+
+
+
+class ProductCreateIn(BaseModel):
+    user_id: int
+    title: str = Field(..., min_length=2, max_length=80)
+    price: Annotated[Decimal, Field(gt=0, max_digits=9, decimal_places=2)]
+    sku: str | None = None
+    description: str | None = None
+    keywords: list[str] = []
+    image_url: str | None = None
+
+
+
+class ProductOut(BaseModel):
+    id: int
+    title: str
+    price: float
+    sku: str | None = None
+    description: str | None = None
+    keywords: str | None = None
+    image_url: str | None = None
+
+    class Config:
+        orm_mode = True
+
+@app.post("/products/create", response_model=ProductOut)
+def add_product(payload: ProductCreateIn = Body(...), db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.id == payload.user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    business = db.query(Business).filter(Business.owner_id == user.id).first()
+    if not business:
+        raise HTTPException(status_code=404, detail="Business not found for user")
+
+    prod = Product(
+        business_id = business.id,
+        title       = payload.title,
+        price       = float(payload.price),
+        sku         = payload.sku,
+        description = payload.description,
+        keywords    = ",".join(payload.keywords) if payload.keywords else None,
+        image_url   = payload.image_url
+    )
+    db.add(prod)
+    db.commit()
+    db.refresh(prod)
+    return prod
 
 
 print("V2 Achieved")

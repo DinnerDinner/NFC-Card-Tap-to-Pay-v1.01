@@ -35,6 +35,20 @@ class ProductManagerViewModel(app: Application) : AndroidViewModel(app) {
     private val _state = MutableStateFlow<ProductMgrState>(ProductMgrState.Loading)
     val state: StateFlow<ProductMgrState> = _state
 
+    // Exposed reversed list for newest-first display
+    val reversedProducts: StateFlow<List<Product>> = state
+        .map { state ->
+            when (state) {
+                is ProductMgrState.Ready -> state.products.reversed()
+                else -> emptyList()
+            }
+        }
+        .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
+
+    fun refreshProducts() {
+        loadProducts()
+    }
+
     fun loadProducts() {
         val userId = prefs.getInt("user_id", -1)
         if (userId == -1) {
@@ -49,7 +63,7 @@ class ProductManagerViewModel(app: Application) : AndroidViewModel(app) {
                 .toString().toRequestBody("application/json".toMediaType())
 
             val req = Request.Builder()
-                .url("$BASE_URL/products/list")        // <‑‑ define later
+                .url("$BASE_URL/products/list")
                 .post(body)
                 .build()
 
@@ -57,13 +71,17 @@ class ProductManagerViewModel(app: Application) : AndroidViewModel(app) {
                 override fun onFailure(call: Call, e: IOException) {
                     _state.value = ProductMgrState.Error("Network error")
                 }
+
                 override fun onResponse(call: Call, res: Response) {
-                    val arr = try { JSONObject("{\"rows\":${res.body!!.string()}}").getJSONArray("rows") }
-                    catch (e: Exception) { null }
+                    val arr = try {
+                        JSONObject("{\"rows\":${res.body!!.string()}}").getJSONArray("rows")
+                    } catch (e: Exception) { null }
+
                     if (arr == null) {
                         _state.value = ProductMgrState.Error("Bad response")
                         return
                     }
+
                     val list = mutableListOf<Product>()
                     for (i in 0 until arr.length()) {
                         val o = arr.getJSONObject(i)
@@ -74,11 +92,11 @@ class ProductManagerViewModel(app: Application) : AndroidViewModel(app) {
                             sku   = o.optString("sku", null)
                         )
                     }
+
                     _state.value = ProductMgrState.Ready(list)
                 }
             })
         }
     }
-
-    /* later: add addProduct(), deleteProduct(id), etc. */
 }
+

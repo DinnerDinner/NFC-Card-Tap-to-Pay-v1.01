@@ -119,14 +119,7 @@ def interactive_delete():
     except Exception as e:
         print(f"Error parsing IDs: {e}")
 
-# if __name__ == "__main__":
-#     action = input("Choose action: [update/delete]: ").strip().lower()
-#     if action == "update":
-#         interactive_update()
-#     elif action == "delete":
-#         interactive_delete()
-#     else:
-#         print("Unknown action. Please type 'update' or 'delete'.")
+
 
 def delete_businesses_by_ids(ids: list[int]):
     session = SessionLocal()
@@ -157,7 +150,13 @@ def interactive_delete_businesses():
 
 if __name__ == "__main__":
     interactive_delete_businesses()
-
+    action = input("Choose action: [update/delete]: ").strip().lower()
+    if action == "update":
+        interactive_update()
+    elif action == "delete":
+        interactive_delete()
+    else:
+        print("Unknown action. Please type 'update' or 'delete'.")
 
 
 
