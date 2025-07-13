@@ -36,44 +36,44 @@ if __name__ == "__main__":
 
 
 
-#PRODUCTS CHECK DATABASE
-# import sys
+# PRODUCTS CHECK DATABASE
+import sys
 
-# from db_files.database import SessionLocal
-# from db_files.models import Business, Product
+from db_files.database import SessionLocal
+from db_files.models import Business, Product
 
-# def print_all_businesses_and_products():
-#     session = SessionLocal()
-#     try:
-#         businesses = session.query(Business).all()
+def print_all_businesses_and_products():
+    session = SessionLocal()
+    try:
+        businesses = session.query(Business).all()
 
-#         if not businesses:
-#             print("No businesses found in database.")
-#             return
+        if not businesses:
+            print("No businesses found in database.")
+            return
 
-#         for biz in businesses:
-#             print(f"\n=== Business ID: {biz.id} | Name: {biz.business_name} | Owner User ID: {biz.owner_id} ===")
+        for biz in businesses:
+            print(f"\n=== Business ID: {biz.id} | Name: {biz.business_name} | Owner User ID: {biz.owner_id} ===")
             
-#             if not biz.products:
-#                 print("  No products for this business.")
-#                 continue
+            if not biz.products:
+                print("  No products for this business.")
+                continue
 
-#             for prod in biz.products:
-#                 print(
-#                     f"  - Product ID: {prod.id}\n"
-#                     f"    Title: {prod.title}\n"
-#                     f"    Price: ${prod.price:.2f}\n"
-#                     f"    SKU: {prod.sku}\n"
-#                     f"    Barcode: {prod.barcode_number}\n"
-#                     f"    Description: {prod.description}\n"
-#                     f"    Keywords: {prod.keywords}\n"
-#                     f"    Created at: {prod.created_at}\n"
-#                 )
-#     finally:
-#         session.close()
+            for prod in biz.products:
+                print(
+                    f"  - Product ID: {prod.id}\n"
+                    f"    Title: {prod.title}\n"
+                    f"    Price: ${prod.price:.2f}\n"
+                    f"    SKU: {prod.sku}\n"
+                    f"    Barcode: {prod.barcode_number}\n"
+                    f"    Description: {prod.description}\n"
+                    f"    Keywords: {prod.keywords}\n"
+                    f"    Created at: {prod.created_at}\n"
+                )
+    finally:
+        session.close()
 
-# if __name__ == "__main__":
-#     print_all_businesses_and_products()
+if __name__ == "__main__":
+    print_all_businesses_and_products()
 
 
 
@@ -100,7 +100,7 @@ def print_all_businesses():
             print("No businesses found in database.")
             return
         for biz in businesses:
-            print(f"Business ID: {biz.id} | Name: {biz.business_name} | Owner User ID: {biz.owner_id} | Created at: {biz.created_at}")
+            print(f"Business ID: {biz.id} | Name: {biz.business_name} | Owner User ID: {biz.owner_id} | Created at: {biz.created_at}|")
     finally:
         session.close()
 

@@ -17,7 +17,8 @@ private const val BASE_URL = "https://promoted-quetzal-visually.ngrok-free.app"
 data class Product(
     val id: Int,
     val title: String,
-    val price: Double
+    val price: Double,
+    val sku: String?
 )
 
 sealed class ProductMgrState {
@@ -69,7 +70,8 @@ class ProductManagerViewModel(app: Application) : AndroidViewModel(app) {
                         list += Product(
                             id    = o.getInt("id"),
                             title = o.getString("title"),
-                            price = o.optDouble("price", 0.0)
+                            price = o.optDouble("price", 0.0),
+                            sku   = o.optString("sku", null)
                         )
                     }
                     _state.value = ProductMgrState.Ready(list)

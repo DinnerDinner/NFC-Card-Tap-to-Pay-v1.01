@@ -120,7 +120,7 @@ def create_user_with_business_and_products(card_uid: str, session: Session):
     session.flush()  # ensures biz.id is populated
 
     # 4️⃣  Products (3 random)
-    for _ in range(3):
+    for _ in range(5):
         product = Product(
             business_id=biz.id,
             title=random_product_name(),

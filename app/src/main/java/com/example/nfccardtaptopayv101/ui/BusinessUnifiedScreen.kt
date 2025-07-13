@@ -14,7 +14,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.nfccardtaptopayv101.ui.viewmodel.mpos.BusinessUiState
 import com.example.nfccardtaptopayv101.ui.viewmodel.mpos.BusinessViewModel
-import com.example.nfccardtaptopayv101.ui.screens.ProductManagerScreen
+import com.example.nfccardtaptopayv101.ui.navigation.MposNavGraph
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -150,13 +150,12 @@ fun BusinessUnifiedScreen(
                     }
                 }
                 "product_manager" -> {
-                    // Show your ProductManagerScreen here
-                    ProductManagerScreen(
-                        onBack = { currentScreen = "business" }
+                    // **Launch isolated mPOS NavGraph here**
+                    MposNavGraph(
+                        onBackToDashboard = { currentScreen = "business" }
                     )
                 }
             }
         }
     }
 }
-
