@@ -5,7 +5,7 @@ from datetime import datetime, date
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from db_files.database import SessionLocal
-from db_files.models import User
+from db_files.models import User, Business
 
 # Map column names to their types (simplified)
 COLUMN_TYPES = {
@@ -119,11 +119,47 @@ def interactive_delete():
     except Exception as e:
         print(f"Error parsing IDs: {e}")
 
+# if __name__ == "__main__":
+#     action = input("Choose action: [update/delete]: ").strip().lower()
+#     if action == "update":
+#         interactive_update()
+#     elif action == "delete":
+#         interactive_delete()
+#     else:
+#         print("Unknown action. Please type 'update' or 'delete'.")
+
+def delete_businesses_by_ids(ids: list[int]):
+    session = SessionLocal()
+    try:
+        for business_id in ids:
+            business = session.query(Business).filter(Business.id == business_id).first()
+            if business:
+                session.delete(business)
+                session.commit()
+                print(f"🗑️ Business with id {business_id} deleted.")
+            else:
+                print(f"❌ No business found with id {business_id}.")
+    except Exception as e:
+        print(f"❌ Error deleting businesses: {e}")
+    finally:
+        session.close()
+
+def interactive_delete_businesses():
+    ids_str = input("Enter business IDs to delete (comma separated): ").strip()
+    try:
+        ids = [int(x.strip()) for x in ids_str.split(",") if x.strip().isdigit()]
+        if not ids:
+            print("No valid IDs entered.")
+            return
+        delete_businesses_by_ids(ids)
+    except Exception as e:
+        print(f"Error parsing IDs: {e}")
+
 if __name__ == "__main__":
-    action = input("Choose action: [update/delete]: ").strip().lower()
-    if action == "update":
-        interactive_update()
-    elif action == "delete":
-        interactive_delete()
-    else:
-        print("Unknown action. Please type 'update' or 'delete'.")
+    interactive_delete_businesses()
+
+
+
+
+
+

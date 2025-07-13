@@ -38,15 +38,15 @@ class TaptoTransferMachine : ComponentActivity() {
     private var screenState by mutableStateOf(ScreenState.ENTER_AMOUNT)
     private var amountToCharge by mutableStateOf(0f)
     private var successMessage by mutableStateOf("")
-    private lateinit var merchantEmail: String
+    private lateinit var merchantId: String
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         nfcAdapter = NfcAdapter.getDefaultAdapter(this)
 
         val prefs = getSharedPreferences("user_prefs", Context.MODE_PRIVATE)
-        merchantEmail = prefs.getString("user_data", null)
-            ?.let { JSONObject(it).getString("email") }
+        merchantId = prefs.getString("user_data", null)
+            ?.let { JSONObject(it).getString("user_id") }
             ?: ""
 
         setContent {
@@ -84,7 +84,7 @@ class TaptoTransferMachine : ComponentActivity() {
     private fun postPurchase(cardUid: String) {
         val json = JSONObject().apply {
             put("uid", cardUid)
-            put("merchant_email", merchantEmail)
+            put("merchant_id", merchantId)
             put("amount", amountToCharge)
         }
 

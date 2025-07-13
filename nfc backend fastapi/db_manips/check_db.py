@@ -89,20 +89,20 @@ if __name__ == "__main__":
 
 
 
-# from db_files.database import SessionLocal
-# from db_files.models import Business
+from db_files.database import SessionLocal
+from db_files.models import Business
 
-# def print_all_businesses():
-#     session = SessionLocal()
-#     try:
-#         businesses = session.query(Business).all()
-#         if not businesses:
-#             print("No businesses found in database.")
-#             return
-#         for biz in businesses:
-#             print(f"Business ID: {biz.id} | Name: {biz.business_name} | Owner User ID: {biz.owner_id} | Created at: {biz.created_at}")
-#     finally:
-#         session.close()
+def print_all_businesses():
+    session = SessionLocal()
+    try:
+        businesses = session.query(Business).all()
+        if not businesses:
+            print("No businesses found in database.")
+            return
+        for biz in businesses:
+            print(f"Business ID: {biz.id} | Name: {biz.business_name} | Owner User ID: {biz.owner_id} | Created at: {biz.created_at}")
+    finally:
+        session.close()
 
-# if __name__ == "__main__":
-#     print_all_businesses()
+if __name__ == "__main__":
+    print_all_businesses()

@@ -13,7 +13,10 @@ import re
 from db_files.models import Business, Product 
 
 
-
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.orm import Session
+from typing import List
+from pydantic import BaseModel
 
 
 Base.metadata.create_all(bind=engine)
@@ -223,7 +226,7 @@ def update_profile(payload: UserUpdatePayload = Body(...), db: Session = Depends
 
 class PurchasePayload(BaseModel):
     uid: str              # tapped‑card UID  (customer)
-    merchant_email: EmailStr
+    merchant_id: int
     amount: float         # CAD dollars (positive)
 
 @app.post("/transfer")
@@ -238,8 +241,8 @@ def transfer(payload: PurchasePayload, db: Session = Depends(get_db)):
     customer = db.query(User).filter(User.card_uid == payload.uid).first()
     if not customer:
         raise HTTPException(status_code=404, detail="❌ Payment failed\nCustomer card not found")
-    merchant_email = payload.merchant_email.lower()
-    merchant = db.query(User).filter(User.email == merchant_email).first()
+    merchant_id = payload.merchant_id
+    merchant = db.query(User).filter(User.id == merchant_id).first()
     if not merchant:
         raise HTTPException(status_code=404, detail="❌ Payment failed\nMerchant not found")
     cents = int(round(payload.amount * 100))
@@ -307,7 +310,52 @@ def setup_business(payload: BusinessSetupPayload, db: Session = Depends(get_db))
     )
 
 
+@app.post("/business/exists")
+def check_business(payload: dict, db: Session = Depends(get_db)):
+    user_id = payload.get("user_id")
+    if not user_id:
+        raise HTTPException(status_code=400, detail="user_id required")
+
+    business = db.query(Business).filter(Business.owner_id == user_id).first()
+    if business:
+        return {
+            "has_business": True,
+            "business_name": business.business_name,
+            "business_id": business.id,         
+        }
+    return { "has_business": False }
+
+
+
+
+
+
+class ProductsListRequest(BaseModel):
+    user_id: int
+    
+class ProductOut(BaseModel):
+    id: int
+    title: str
+    price: float
+    sku: str | None = None
+    barcode_number: str | None = None
+    description: str | None = None
+    keywords: str | None = None
+    image_url: str | None = None
+
+    class Config:
+        orm_mode = True
+
+@app.post("/products/list", response_model=List[ProductOut])
+def list_products(payload: ProductsListRequest, db: Session = Depends(get_db)):
+    user_id = payload.user_id
+    business = db.query(Business).filter(Business.owner_id == user_id).first()
+    if not business:
+        raise HTTPException(status_code=404, detail="Business not found for user")
+    products = db.query(Product).filter(Product.business_id == business.id).all()
+    return products
 
 
 
 print("V2 Achieved")
+
