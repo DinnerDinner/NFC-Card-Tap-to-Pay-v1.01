@@ -1,5 +1,6 @@
 package com.example.nfccardtaptopayv101.ui.screens
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -13,12 +14,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.nfccardtaptopayv101.ui.viewmodel.mpos.*
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProductManagerScreen(
     vm: ProductManagerViewModel = viewModel(),
     onBack: () -> Unit,
-    onAddProduct: () -> Unit
+    onAddProduct: () -> Unit,
+    onEditProduct: (String) -> Unit // ✅ Needed to send SKU to Edit screen
 ) {
     val state by vm.reversedProducts.collectAsState()
 
@@ -69,6 +72,9 @@ fun ProductManagerScreen(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(180.dp)
+                                .clickable {
+                                    product.sku?.let { onEditProduct(it) } // ✅ Trigger edit with SKU
+                                }
                         ) {
                             Row(modifier = Modifier.fillMaxSize()) {
                                 Box(
@@ -121,10 +127,3 @@ fun ProductManagerScreen(
         }
     }
 }
-
-
-
-
-
-
-
