@@ -167,7 +167,7 @@ class CheckoutTapPaymentActivity : ComponentActivity() {
         ) {
             Text(message, style = MaterialTheme.typography.headlineMedium)
             Spacer(Modifier.height(24.dp))
-            Text("Returning to Sales Page...", style = MaterialTheme.typography.bodyMedium)
+            Text("Returning to Sales Page!", style = MaterialTheme.typography.bodyMedium)
         }
     }
 }
