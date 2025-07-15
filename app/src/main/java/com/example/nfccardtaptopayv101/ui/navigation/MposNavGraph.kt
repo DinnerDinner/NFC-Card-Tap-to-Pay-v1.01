@@ -68,7 +68,7 @@ fun MposNavGraph(
             // Pass the SAME ViewModel instance here
             CheckoutScreen(
                 vm = salesPageViewModel,
-                onBack = { navController.popBackStack() }
+                onBack = { navController.popBackStack() },
             )
         }
     }

@@ -20,6 +20,7 @@
         <activity android:name=".SignUpActivity" />
         <activity android:name=".LoginActivity" />
         <activity android:name=".TaptoTransferMachine" />
+        <activity android:name=".CheckoutTapPaymentActivity" />
 
         <activity
             android:name=".MainActivity"
