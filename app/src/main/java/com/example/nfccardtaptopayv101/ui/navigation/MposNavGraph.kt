@@ -65,11 +65,12 @@ fun MposNavGraph(
         }
 
         composable(MposScreens.Checkout.route) {
-            // Pass the SAME ViewModel instance here
             CheckoutScreen(
                 vm = salesPageViewModel,
-                onBack = { navController.popBackStack() },
+                navController = navController,
+                onBack = { navController.popBackStack() }
             )
         }
+
     }
 }
