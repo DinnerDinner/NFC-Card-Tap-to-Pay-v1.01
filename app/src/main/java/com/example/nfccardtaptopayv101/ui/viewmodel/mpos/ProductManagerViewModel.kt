@@ -18,7 +18,8 @@ data class Product(
     val id: Int,
     val title: String,
     val price: Double,
-    val sku: String?
+    val sku: String?,
+    val keywords: String // NEW
 )
 
 sealed class ProductMgrState {
@@ -35,7 +36,10 @@ class ProductManagerViewModel(app: Application) : AndroidViewModel(app) {
     private val _state = MutableStateFlow<ProductMgrState>(ProductMgrState.Loading)
     val state: StateFlow<ProductMgrState> = _state
 
-    // Exposed reversed list for newest-first display
+    private val _selectedFilter = MutableStateFlow<String?>(null)
+    val selectedFilter: StateFlow<String?> = _selectedFilter
+
+    // All products in reverse order
     val reversedProducts: StateFlow<List<Product>> = state
         .map { state ->
             when (state) {
@@ -44,6 +48,31 @@ class ProductManagerViewModel(app: Application) : AndroidViewModel(app) {
             }
         }
         .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
+
+    // Extract all unique keywords (flattened, trimmed, non-empty, deduplicated)
+    val allFilters: StateFlow<List<String>> = state
+        .map { state ->
+            if (state is ProductMgrState.Ready) {
+                state.products.flatMap { it.keywords.split(",") }
+                    .map { it.trim() }
+                    .filter { it.isNotEmpty() }
+                    .distinct()
+            } else emptyList()
+        }
+        .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
+
+    // Filtered visible products based on selected keyword (if any)
+    val visibleProducts: StateFlow<List<Product>> = combine(reversedProducts, selectedFilter) { products, filter ->
+        filter?.let {
+            products.filter { product ->
+                product.keywords.split(",").map { it.trim() }.contains(filter)
+            }
+        } ?: products
+    }.stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
+
+    fun selectFilter(filter: String?) {
+        _selectedFilter.value = filter
+    }
 
     fun refreshProducts() {
         loadProducts()
@@ -86,10 +115,11 @@ class ProductManagerViewModel(app: Application) : AndroidViewModel(app) {
                     for (i in 0 until arr.length()) {
                         val o = arr.getJSONObject(i)
                         list += Product(
-                            id    = o.getInt("id"),
-                            title = o.getString("title"),
-                            price = o.optDouble("price", 0.0),
-                            sku   = o.optString("sku", null)
+                            id       = o.getInt("id"),
+                            title    = o.getString("title"),
+                            price    = o.optDouble("price", 0.0),
+                            sku      = o.optString("sku", null),
+                            keywords = o.optString("keywords", "") // Must match backend response
                         )
                     }
 
@@ -99,4 +129,6 @@ class ProductManagerViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 }
+
+
 

@@ -1,6 +1,14 @@
 package com.example.nfccardtaptopayv101
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.*
+import androidx.compose.ui.unit.dp
+import com.airbnb.lottie.compose.*
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.res.stringResource
+import com.example.nfccardtaptopayv101.R
 import android.app.Activity
-
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
@@ -152,22 +160,63 @@ class CheckoutTapPaymentActivity : ComponentActivity() {
         ) {
             Text("Charge Customer", style = MaterialTheme.typography.headlineMedium)
             Spacer(Modifier.height(24.dp))
-            Text("$${"%.2f".format(amount)}", style = MaterialTheme.typography.displayMedium.copy(fontSize = 48.sp))
+            Text(
+                "$${"%.2f".format(amount)}",
+                style = MaterialTheme.typography.displayMedium.copy(fontSize = 48.sp)
+            )
             Spacer(Modifier.height(24.dp))
             Text("Please tap the customer's card", style = MaterialTheme.typography.bodyLarge)
         }
     }
 
+//    @Composable
+//    private fun SuccessScreen(message: String) {
+//        Column(
+//            modifier = Modifier.fillMaxSize().padding(32.dp),
+//            verticalArrangement = Arrangement.Center,
+//            horizontalAlignment = Alignment.CenterHorizontally
+//        ) {
+//            Text(message, style = MaterialTheme.typography.headlineMedium)
+//            Spacer(Modifier.height(24.dp))
+//            Text("Returning to Sales Page!", style = MaterialTheme.typography.bodyMedium)
+//        }
+//    }
+
+
     @Composable
     private fun SuccessScreen(message: String) {
+        val isSuccess = message.contains("success", ignoreCase = true) || message.contains("✅")
+        val animationRes = if (isSuccess) R.raw.success_animation else R.raw.failure_animation
+        val composition by rememberLottieComposition(LottieCompositionSpec.RawRes(animationRes))
+        val progress by animateLottieCompositionAsState(
+            composition,
+            iterations = 1,
+            speed = 1.5f,
+            restartOnPlay = false
+        )
+
         Column(
             modifier = Modifier.fillMaxSize().padding(32.dp),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text(message, style = MaterialTheme.typography.headlineMedium)
-            Spacer(Modifier.height(24.dp))
-            Text("Returning to Sales Page!", style = MaterialTheme.typography.bodyMedium)
+            LottieAnimation(
+                composition,
+                progress,
+                modifier = Modifier.size(180.dp)
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+            Text(
+                text = if (isSuccess) "Payment Successful!" else "Payment Failed",
+                style = MaterialTheme.typography.headlineMedium,
+                color = if (isSuccess) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = message.replace("✅", "").replace("❌", "").trim(),
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onBackground
+            )
         }
     }
 }
