@@ -83,7 +83,7 @@ fun AddProductScreen(
                     text = "${title.length} / 50",
                     style = MaterialTheme.typography.bodySmall,
                     modifier = Modifier.align(Alignment.End),
-                    color = if (title.length >= 50) MaterialTheme.colorScheme.error else Color.Gray
+                    color = if (title.length >= 52) MaterialTheme.colorScheme.error else Color.Gray
                 )
             }
 
