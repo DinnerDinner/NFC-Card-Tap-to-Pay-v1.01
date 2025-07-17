@@ -71,7 +71,7 @@ fun AddProductScreen(
                 OutlinedTextField(
                     value = title,
                     onValueChange = { newText ->
-                        if (newText.length <= 50) {
+                        if (newText.length <= 52) {
                             vm.title.value = newText  // keep updating ViewModel
                         }
                     },
