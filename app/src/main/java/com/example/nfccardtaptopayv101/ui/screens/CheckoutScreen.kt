@@ -68,7 +68,8 @@ fun CheckoutScreen(
         bottomBar = {
             BottomAppBar(
                 tonalElevation = 8.dp,
-                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp)
+                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
+                modifier = Modifier.height(120.dp) // doubled from default ~56dp to 120dp
             ) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -87,33 +88,41 @@ fun CheckoutScreen(
 
                     Spacer(modifier = Modifier.weight(1f))
 
-                    Column(horizontalAlignment = Alignment.End) {
+                    Column(
+                        horizontalAlignment = Alignment.End
+                    ) {
                         Text(
                             "Total: $${"%.2f".format(grandTotal)}",
                             style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.padding(bottom = 8.dp)
                         )
 
                         if (selectedItems.isNotEmpty()) {
-                            Spacer(modifier = Modifier.height(8.dp))
                             Button(
                                 onClick = {
-                                    // Launch the NFC payment Activity with total amount
                                     val intent = Intent(context, CheckoutTapPaymentActivity::class.java).apply {
                                         putExtra("amount_to_charge", grandTotal.toFloat())
                                     }
                                     activity?.let { launcher.launch(intent) }
                                 },
-                                contentPadding = PaddingValues(horizontal = 20.dp, vertical = 6.dp),
-                                shape = RoundedCornerShape(12.dp)
+                                contentPadding = PaddingValues(horizontal = 24.dp, vertical = 12.dp),
+                                shape = RoundedCornerShape(12.dp),
+                                modifier = Modifier.height(56.dp) // bigger button height
                             ) {
-                                Text("Pay Now")
+                                Text(
+                                    "Pay Now",
+                                    fontSize = 18.sp,
+                                    fontWeight = FontWeight.SemiBold
+                                )
                             }
                         }
                     }
                 }
             }
         }
+
+
     ) { padding ->
 
         if (selectedItems.isEmpty()) {

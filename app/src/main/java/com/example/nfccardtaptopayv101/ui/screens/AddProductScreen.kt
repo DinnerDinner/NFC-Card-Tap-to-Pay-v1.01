@@ -65,13 +65,30 @@ fun AddProductScreen(
                 }
             }
 
-            OutlinedTextField(
-                value = vm.title.collectAsState().value,
-                onValueChange = { vm.title.value = it },
-                label = { Text("Product Name") },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth()
-            )
+            val title by vm.title.collectAsState()
+
+            Column {
+                OutlinedTextField(
+                    value = title,
+                    onValueChange = { newText ->
+                        if (newText.length <= 50) {
+                            vm.title.value = newText  // keep updating ViewModel
+                        }
+                    },
+                    label = { Text("Product Name") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Text(
+                    text = "${title.length} / 50",
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.align(Alignment.End),
+                    color = if (title.length >= 50) MaterialTheme.colorScheme.error else Color.Gray
+                )
+            }
+
+
+
 
             OutlinedTextField(
                 value = vm.price.collectAsState().value,
