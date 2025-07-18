@@ -116,7 +116,7 @@ fun CheckoutScreen(
                                 modifier = Modifier.height(56.dp) // bigger button height
                             ) {
                                 Text(
-                                    "Pay Now",
+                                    "Pay Now!!",
                                     fontSize = 18.sp,
                                     fontWeight = FontWeight.SemiBold
                                 )
