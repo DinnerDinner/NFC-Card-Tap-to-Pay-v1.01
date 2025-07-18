@@ -1,4 +1,5 @@
 package com.example.nfccardtaptopayv101.ui.screens
+import androidx.compose.ui.layout.ContentScale
 
 import android.widget.Toast
 import androidx.compose.foundation.background
@@ -23,7 +24,9 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.nfccardtaptopayv101.ui.viewmodel.mpos.EditDeleteProductUiState
 import com.example.nfccardtaptopayv101.ui.viewmodel.mpos.EditDeleteProductViewModel
-
+import androidx.compose.foundation.Image
+import coil.compose.rememberAsyncImagePainter
+import coil.request.ImageRequest
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EditDeleteProductScreen(
@@ -37,7 +40,7 @@ fun EditDeleteProductScreen(
     val context = LocalContext.current
     val state by vm.uiState.collectAsState()
     val scroll = rememberScrollState()
-
+    val imageUrl = vm.imageUrl
     val title by vm.title.collectAsState()
     val price by vm.price.collectAsState()
     val description by vm.description.collectAsState()
@@ -115,6 +118,7 @@ fun EditDeleteProductScreen(
                 )
             }
 
+
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -123,9 +127,26 @@ fun EditDeleteProductScreen(
                     .clickable { /* TODO: implement image picker */ },
                 contentAlignment = Alignment.Center
             ) {
-                Icon(Icons.Default.Image, contentDescription = "Upload Image")
+                if (!imageUrl.isNullOrBlank()) {
+                    Image(
+                        painter = rememberAsyncImagePainter(
+                            ImageRequest.Builder(LocalContext.current)
+                                .data(imageUrl)
+                                .crossfade(true)
+                                .build()
+                        ),
+                        contentDescription = "Product Image",
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Fit // <--- changed here!
+                    )
+                } else {
+                    Icon(
+                        Icons.Default.Image,
+                        contentDescription = "Upload Image",
+                        modifier = Modifier.fillMaxSize(0.8f)
+                    )
+                }
             }
-
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween

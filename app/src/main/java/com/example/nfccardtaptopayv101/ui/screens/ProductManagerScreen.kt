@@ -1,5 +1,8 @@
 package com.example.nfccardtaptopayv101.ui.screens
 
+import androidx.compose.ui.layout.ContentScale
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -17,6 +20,9 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.nfccardtaptopayv101.ui.viewmodel.mpos.ProductManagerViewModel
 import kotlinx.coroutines.launch
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
+import com.example.nfccardtaptopayv101.R  // your app's R file, adjust package name accordingly
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -146,11 +152,23 @@ fun ProductManagerScreen(
                                             .weight(0.5f),
                                         contentAlignment = Alignment.Center
                                     ) {
-                                        Icon(
-                                            imageVector = Icons.Filled.Business,
-                                            contentDescription = "Product image",
-                                            modifier = Modifier.fillMaxSize(0.8f)
-                                        )
+                                        if (!product.image_url.isNullOrEmpty()) {
+                                            AsyncImage(
+                                                model = ImageRequest.Builder(LocalContext.current)
+                                                    .data(product.image_url)
+                                                    .crossfade(true)
+                                                    .build(),
+                                                contentDescription = "Product image",
+                                                modifier = Modifier.fillMaxSize(),
+                                                contentScale = ContentScale.Fit  // or ContentScale.Crop if you prefer
+                                            )
+                                        } else {
+                                            Icon(
+                                                imageVector = Icons.Filled.Business,
+                                                contentDescription = "Product placeholder",
+                                                modifier = Modifier.fillMaxSize(0.8f)
+                                            )
+                                        }
                                     }
                                     Column(
                                         modifier = Modifier

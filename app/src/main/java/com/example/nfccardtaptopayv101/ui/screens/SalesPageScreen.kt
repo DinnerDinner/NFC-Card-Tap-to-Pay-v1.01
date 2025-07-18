@@ -1,5 +1,9 @@
 package com.example.nfccardtaptopayv101.ui.screens
-
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.foundation.Image
+import androidx.compose.ui.layout.ContentScale
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -176,6 +180,7 @@ fun SalesPageScreen(
                                             verticalAlignment = Alignment.CenterVertically,
                                             horizontalArrangement = Arrangement.Start
                                         ) {
+
                                             Box(
                                                 modifier = Modifier
                                                     .width(140.dp)
@@ -186,7 +191,25 @@ fun SalesPageScreen(
                                                     ),
                                                 contentAlignment = Alignment.Center
                                             ) {
-                                                Text("IMG", style = MaterialTheme.typography.labelLarge, color = Color.DarkGray)
+                                                val imageUrl = product.image_url
+
+                                                if (!imageUrl.isNullOrBlank()) {
+                                                    AsyncImage(
+                                                        model = ImageRequest.Builder(LocalContext.current)
+                                                            .data(imageUrl)
+                                                            .crossfade(true)
+                                                            .build(),
+                                                        contentDescription = product.title,
+                                                        contentScale = ContentScale.Crop,
+                                                        modifier = Modifier.fillMaxSize()
+                                                    )
+                                                } else {
+                                                    Text(
+                                                        "IMG",
+                                                        style = MaterialTheme.typography.labelLarge,
+                                                        color = Color.DarkGray
+                                                    )
+                                                }
                                             }
 
                                             Spacer(Modifier.width(16.dp))

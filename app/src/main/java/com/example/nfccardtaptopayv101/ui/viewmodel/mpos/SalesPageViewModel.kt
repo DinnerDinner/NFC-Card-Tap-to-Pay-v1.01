@@ -125,7 +125,8 @@ class SalesPageViewModel(app: Application) : AndroidViewModel(app) {
                             title = o.getString("title"),
                             price = o.optDouble("price", 0.0),
                             sku = o.optString("sku", null),
-                            keywords = o.getString("keywords")
+                            keywords = o.getString("keywords"),
+                            image_url = o.optString("image_url", null)  // <- Add here
                         )
                     }
 

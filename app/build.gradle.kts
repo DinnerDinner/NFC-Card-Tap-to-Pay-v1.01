@@ -67,4 +67,10 @@ dependencies {
     implementation("androidx.compose.material3:material3:1.1.0")
     implementation("androidx.navigation:navigation-compose:2.5.3")
     implementation ("com.airbnb.android:lottie-compose:6.1.0")
+    implementation("io.coil-kt:coil-compose:2.4.0") // Image loading
+    implementation("com.github.dhaval2404:imagepicker:2.1") // Image picker
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")    // Networking
+    implementation("com.google.accompanist:accompanist-flowlayout:0.30.1")
+    implementation("androidx.compose.foundation:foundation:1.4.3")
+    implementation("io.coil-kt:coil-compose:2.4.0")
 }

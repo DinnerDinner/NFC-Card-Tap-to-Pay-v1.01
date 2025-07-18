@@ -16,9 +16,11 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
+        maven("https://jitpack.io")   // Correct syntax
+
     }
 }
 
 rootProject.name = "NFC Card Tap to Pay v1.01"
 include(":app")
- 
+

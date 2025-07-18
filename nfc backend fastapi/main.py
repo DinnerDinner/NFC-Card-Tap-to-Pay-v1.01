@@ -1,6 +1,7 @@
 print("V2 Started!! WITH MPOS SYSTEM!!!")
 
-
+from fastapi import UploadFile, File
+# from cloudinary_utils import upload_image_to_cloudinary
 from typing import Annotated
 from pydantic import BaseModel, Field
 from decimal import Decimal
@@ -22,11 +23,22 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
 from pydantic import BaseModel
-
+from fastapi import FastAPI, UploadFile, File, HTTPException, Depends, Body
+from pydantic import BaseModel, Field
+from sqlalchemy.orm import Session
+from decimal import Decimal
+from typing import List, Optional, Annotated
+import cloudinary
+import cloudinary.uploader
 
 Base.metadata.create_all(bind=engine)
 app = FastAPI()
 
+cloudinary.config(
+    cloud_name="dqhr9pgl0",
+    api_key="289124826863297",
+    api_secret="ZscnuDZzhq4uYAA2_qH6SIDTHkg"
+)
 
 def get_db():
     db = SessionLocal()
@@ -409,8 +421,22 @@ def add_product(payload: ProductCreateIn = Body(...), db: Session = Depends(get_
     db.refresh(prod)
     return prod
 
+def upload_image_to_cloudinary(file):
+    try:
+        result = cloudinary.uploader.upload(file.file)
+        return result.get("secure_url")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Upload failed: {str(e)}")
+    
 
-
+    
+@app.post("/upload_image")
+def upload_image(file: UploadFile = File(...)):
+    try:
+        image_url = upload_image_to_cloudinary(file)
+        return {"image_url": image_url}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 class ProductSkuRequest(BaseModel):

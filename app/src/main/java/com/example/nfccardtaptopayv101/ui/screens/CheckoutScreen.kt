@@ -1,4 +1,6 @@
 package com.example.nfccardtaptopayv101.ui.screens
+import androidx.compose.foundation.Image
+import coil.compose.rememberAsyncImagePainter
 
 import android.app.Activity
 import android.content.Intent
@@ -17,12 +19,15 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
 import com.example.nfccardtaptopayv101.CheckoutTapPaymentActivity
 import com.example.nfccardtaptopayv101.ui.navigation.MposScreens
 import com.example.nfccardtaptopayv101.ui.viewmodel.mpos.SalesPageViewModel
@@ -167,12 +172,29 @@ fun CheckoutScreen(
                                     ),
                                 contentAlignment = Alignment.Center
                             ) {
-                                Text(
-                                    "IMG",
-                                    style = MaterialTheme.typography.labelLarge,
-                                    color = Color.DarkGray
-                                )
+                                if (!product.image_url.isNullOrBlank()) {
+                                    Image(
+                                        painter = rememberAsyncImagePainter(
+                                            ImageRequest.Builder(LocalContext.current)
+                                                .data(product.image_url)
+                                                .crossfade(true)
+                                                .build()
+                                        ),
+                                        contentDescription = "Product Image",
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .padding(6.dp),
+                                        contentScale = ContentScale.Fit
+                                    )
+                                } else {
+                                    Text(
+                                        "IMG",
+                                        style = MaterialTheme.typography.labelLarge,
+                                        color = Color.DarkGray
+                                    )
+                                }
                             }
+
 
                             Spacer(Modifier.width(16.dp))
 

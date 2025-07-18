@@ -19,7 +19,9 @@ data class Product(
     val title: String,
     val price: Double,
     val sku: String?,
-    val keywords: String
+    val keywords: String,
+    val image_url: String?  // Add this!
+
 )
 
 sealed class ProductMgrState {
@@ -129,7 +131,8 @@ class ProductManagerViewModel(app: Application) : AndroidViewModel(app) {
                             title    = o.getString("title"),
                             price    = o.optDouble("price", 0.0),
                             sku      = o.optString("sku", null),
-                            keywords = o.optString("keywords", "")
+                            keywords = o.optString("keywords", ""),
+                            image_url = o.optString("image_url", null)  // <- Add here
                         )
                     }
 
