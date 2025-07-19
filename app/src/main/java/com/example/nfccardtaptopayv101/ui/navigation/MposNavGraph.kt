@@ -1,4 +1,6 @@
 package com.example.nfccardtaptopayv101.ui.navigation
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
 
 import androidx.compose.runtime.Composable
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -12,7 +14,8 @@ import com.example.nfccardtaptopayv101.ui.viewmodel.mpos.SalesPageViewModel
 sealed class MposScreens(val route: String) {
     object ProductManager : MposScreens("product_manager")
     object AddProduct : MposScreens("add_product")
-    object EditDeleteProduct : MposScreens("edit_delete_product")
+    object EditDeleteProduct : MposScreens("edit_delete_product/{productId}") {
+        fun createRoute(productId: Int) = "edit_delete_product/$productId"}
     object SalesPage : MposScreens("sales_page")
     object Checkout : MposScreens("checkout")
 }
@@ -34,11 +37,13 @@ fun MposNavGraph(
             ProductManagerScreen(
                 onBack = onBackToDashboard,
                 onAddProduct = { navController.navigate(MposScreens.AddProduct.route) },
-                onEditProduct = { productId ->
-                    navController.currentBackStackEntry
-                        ?.savedStateHandle
-                        ?.set("edit_product_id", productId)
-                    navController.navigate(MposScreens.EditDeleteProduct.route)
+                onEditProduct = { productId: Int ->
+                    navController.navigate(MposScreens.EditDeleteProduct.createRoute(productId))
+
+//                    navController.currentBackStackEntry
+//                        ?.savedStateHandle
+//                        ?.set("edit_product_id", productId)
+//                    navController.navigate(MposScreens.EditDeleteProduct.createRoute(productId))
                 }
             )
         }
@@ -47,10 +52,10 @@ fun MposNavGraph(
             AddProductScreen(onBack = { navController.popBackStack() })
         }
 
-        composable(MposScreens.EditDeleteProduct.route) {
-            val productId = navController.previousBackStackEntry
-                ?.savedStateHandle
-                ?.get<Int>("edit_product_id") ?: -1
+        composable(MposScreens.EditDeleteProduct.route,
+            arguments = listOf(navArgument("productId") { type = NavType.IntType })
+        ) { backStackEntry ->
+            val productId = backStackEntry.arguments?.getInt("productId") ?: -1
             EditDeleteProductScreen(productId = productId, onBack = { navController.popBackStack() })
         }
 

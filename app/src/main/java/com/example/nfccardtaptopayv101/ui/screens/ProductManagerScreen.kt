@@ -30,7 +30,7 @@ fun ProductManagerScreen(
     vm: ProductManagerViewModel = viewModel(),
     onBack: () -> Unit,
     onAddProduct: () -> Unit,
-    onEditProduct: (String) -> Unit
+    onEditProduct: (Int) -> Unit
 ) {
     val visibleProducts by vm.visibleProducts.collectAsState()
     val allKeywords by vm.allFilters.collectAsState()
@@ -142,7 +142,7 @@ fun ProductManagerScreen(
                                     .fillMaxWidth()
                                     .height(180.dp)
                                     .clickable {
-                                        product.sku?.let { onEditProduct(it) }
+                                        product.id?.let { onEditProduct(it) }
                                     }
                             ) {
                                 Row(modifier = Modifier.fillMaxSize()) {

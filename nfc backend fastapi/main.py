@@ -316,7 +316,7 @@ class ProductOut(BaseModel):
     sku: Optional[str] = None
     barcode_number: Optional[str] = None
     description: Optional[str] = None
-    keywords: Optional[str] = None
+    keywords: List[str] = []
     image_url: Optional[str] = None
 
     class Config:
@@ -439,7 +439,6 @@ def get_product_by_id(payload: ProductIdRequest = Body(...), db: Session = Depen
         Product.business_id == business.id,
         Product.id == payload.product_id
     ).first()
-
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
 

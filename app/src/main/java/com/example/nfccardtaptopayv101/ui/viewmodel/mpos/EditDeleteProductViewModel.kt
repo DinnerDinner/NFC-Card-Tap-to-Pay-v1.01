@@ -101,6 +101,7 @@ sealed class EditDeleteProductUiState {
                             }
                             keywords.value = keywordsList
 
+
                             _uiState.value = EditDeleteProductUiState.Idle
                         } catch (e: Exception) {
                             _uiState.value = EditDeleteProductUiState.Error("Malformed response")
@@ -141,7 +142,7 @@ sealed class EditDeleteProductUiState {
                 put("image_url", imageUrl ?: JSONObject.NULL)
             }
             val req = Request.Builder()
-                .url("$BASE_URL/products/edit")
+                .url("$BASE_URL/products/edit_by_id")
                 .post(payload.toString().toRequestBody("application/json".toMediaType()))
                 .build()
 
@@ -182,7 +183,7 @@ sealed class EditDeleteProductUiState {
                 put("product_id", idVal)
             }
             val req = Request.Builder()
-                .url("$BASE_URL/products/delete")
+                .url("$BASE_URL/products/delete_by_id")
                 .post(payload.toString().toRequestBody("application/json".toMediaType()))
                 .build()
 
