@@ -124,7 +124,7 @@ sealed class EditDeleteProductUiState {
         val priceNumber = price.value.toDoubleOrNull()
 
         if (userId == -1) {
-            _uiState.value = EditDeleteProductUiState.Error("User ID missing")
+            _uiState.value = EditDeleteProductUiState.Error("User ID missing!")
             return
         }
         if (idVal == null || title.value.isBlank() || priceNumber == null || priceNumber <= 0.0) {
