@@ -39,11 +39,6 @@ fun MposNavGraph(
                 onAddProduct = { navController.navigate(MposScreens.AddProduct.route) },
                 onEditProduct = { productId: Int ->
                     navController.navigate(MposScreens.EditDeleteProduct.createRoute(productId))
-
-//                    navController.currentBackStackEntry
-//                        ?.savedStateHandle
-//                        ?.set("edit_product_id", productId)
-//                    navController.navigate(MposScreens.EditDeleteProduct.createRoute(productId))
                 }
             )
         }

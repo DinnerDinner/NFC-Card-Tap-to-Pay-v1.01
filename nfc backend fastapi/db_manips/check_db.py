@@ -68,6 +68,7 @@ def print_all_businesses_and_products():
                     f"    Description: {prod.description}\n"
                     f"    Keywords: {prod.keywords}\n"
                     f"    Created at: {prod.created_at}\n"
+                    f"    Image URL: {prod.image_url}\n"
                 )
     finally:
         session.close()

@@ -316,7 +316,7 @@ class ProductOut(BaseModel):
     sku: Optional[str] = None
     barcode_number: Optional[str] = None
     description: Optional[str] = None
-    keywords: List[str] = []
+    keywords: Optional[str] = None
     image_url: Optional[str] = None
 
     class Config:
@@ -340,7 +340,6 @@ class ProductEditByIdRequest(BaseModel):
     keywords: List[str] = []
     image_url: Optional[str] = None
 
-# ----------------------------- Endpoints -----------------------------
 
 @app.post("/business/setup", response_model=BusinessSetupResponse)
 def setup_business(payload: BusinessSetupPayload, db: Session = Depends(get_db)):
@@ -389,10 +388,6 @@ def check_business(payload: dict, db: Session = Depends(get_db)):
 
 
 
-
-
-#Everything using product_id :
-
 @app.post("/products/create", response_model=ProductOut)
 def add_product(payload: ProductCreateIn = Body(...), db: Session = Depends(get_db)):
     user = db.query(User).filter(User.id == payload.user_id).first()
@@ -417,6 +412,8 @@ def add_product(payload: ProductCreateIn = Body(...), db: Session = Depends(get_
     db.refresh(prod)
     return prod
 
+
+
 @app.post("/products/list", response_model=List[ProductOut])
 def list_products(payload: ProductsListRequest, db: Session = Depends(get_db)):
     business = db.query(Business).filter(Business.owner_id == payload.user_id).first()
@@ -424,6 +421,10 @@ def list_products(payload: ProductsListRequest, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Business not found for user")
     products = db.query(Product).filter(Product.business_id == business.id).all()
     return products
+
+
+
+#Everything using product_id :
 
 @app.post("/products/get_by_id", response_model=ProductOut)
 def get_product_by_id(payload: ProductIdRequest = Body(...), db: Session = Depends(get_db)):
@@ -439,10 +440,21 @@ def get_product_by_id(payload: ProductIdRequest = Body(...), db: Session = Depen
         Product.business_id == business.id,
         Product.id == payload.product_id
     ).first()
+
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
 
-    return product
+    return {
+        "id": product.id,
+        "title": product.title,
+        "price": float(product.price),
+        "sku": product.sku,
+        "description": product.description,
+        "keywords": product.keywords.split(",") if product.keywords else [],
+        "image_url": product.image_url
+    }
+
+
 
 @app.post("/products/edit_by_id", response_model=ProductOut)
 def edit_product_by_id(payload: ProductEditByIdRequest = Body(...), db: Session = Depends(get_db)):
@@ -472,7 +484,19 @@ def edit_product_by_id(payload: ProductEditByIdRequest = Body(...), db: Session 
     db.commit()
     db.refresh(product)
 
-    return product
+    return {
+        "message": "Product updated successfully",
+        "product": {
+            "id": product.id,
+            "title": product.title,
+            "price": float(product.price),
+            "sku": product.sku,
+            "description": product.description,
+            "keywords": product.keywords.split(",") if product.keywords else [],
+            "image_url": product.image_url
+        }
+    }
+
 
 @app.post("/products/delete_by_id")
 def delete_product_by_id(payload: ProductIdRequest = Body(...), db: Session = Depends(get_db)):
@@ -500,7 +524,6 @@ def delete_product_by_id(payload: ProductIdRequest = Body(...), db: Session = De
         "product_id": payload.product_id
     }
 
-# ----------------------------- Image Upload -----------------------------
 
 def upload_image_to_cloudinary(file):
     try:
@@ -513,406 +536,6 @@ def upload_image_to_cloudinary(file):
 def upload_image(file: UploadFile = File(...)):
     image_url = upload_image_to_cloudinary(file)
     return {"image_url": image_url}
-
-print("V2 Fully Synced and Corrected")
-
-
-
-
-
-#OLD LEGACY WORKING STUFF::
-# class BusinessSetupPayload(BaseModel):
-#     user_id: int
-#     business_name: str
-
-# class BusinessSetupResponse(BaseModel):
-#     business_id: int
-#     business_name: str
-#     owner_email: EmailStr
-#     message: str
-
-# @app.post("/business/setup", response_model=BusinessSetupResponse)
-# def setup_business(payload: BusinessSetupPayload, db: Session = Depends(get_db)):
-#     user = db.query(User).filter(User.id == payload.user_id).first()
-#     if not user:
-#         raise HTTPException(status_code=404, detail="User not found")
-
-#     existing_business = db.query(Business).filter(Business.owner_id == user.id).first()
-#     if existing_business:
-#         return BusinessSetupResponse(
-#             business_id=existing_business.id,
-#             business_name=existing_business.business_name,
-#             owner_email=user.email,
-#             message="Business already exists for this user"
-#         )
-
-#     new_business = Business(
-#         owner_id=user.id,
-#         business_name=payload.business_name
-#     )
-#     db.add(new_business)
-#     db.commit()
-#     db.refresh(new_business)
-
-#     return BusinessSetupResponse(
-#         business_id=new_business.id,
-#         business_name=new_business.business_name,
-#         owner_email=user.email,
-#         message="Business successfully created"
-#     )
-
-
-# @app.post("/business/exists")
-# def check_business(payload: dict, db: Session = Depends(get_db)):
-#     user_id = payload.get("user_id")
-#     if not user_id:
-#         raise HTTPException(status_code=400, detail="user_id required")
-
-#     business = db.query(Business).filter(Business.owner_id == user_id).first()
-#     if business:
-#         return {
-#             "has_business": True,
-#             "business_name": business.business_name,
-#             "business_id": business.id,         
-#         }
-#     return { "has_business": False }
-
-
-
-
-
-
-# class ProductsListRequest(BaseModel):
-#     user_id: int
-    
-# class ProductOut(BaseModel):
-#     id: int
-#     title: str
-#     price: float
-#     sku: str | None = None
-#     barcode_number: str | None = None
-#     description: str | None = None
-#     keywords: str | None = None
-#     image_url: str | None = None
-
-#     class Config:
-#         orm_mode = True
-
-# @app.post("/products/list", response_model=List[ProductOut])
-# def list_products(payload: ProductsListRequest, db: Session = Depends(get_db)):
-#     user_id = payload.user_id
-#     business = db.query(Business).filter(Business.owner_id == user_id).first()
-#     if not business:
-#         raise HTTPException(status_code=404, detail="Business not found for user")
-#     products = db.query(Product).filter(Product.business_id == business.id).all()
-#     return products
-
-
-
-# class ProductCreateIn(BaseModel):
-#     user_id: int
-#     title: str = Field(..., min_length=2, max_length=80)
-#     price: Annotated[Decimal, Field(gt=0, max_digits=9, decimal_places=2)]
-#     sku: str | None = None
-#     description: str | None = None
-#     keywords: list[str] = []
-#     image_url: str | None = None
-
-
-
-# class ProductOut(BaseModel):
-#     id: int
-#     title: str
-#     price: float
-#     sku: str | None = None
-#     description: str | None = None
-#     keywords: str | None = None
-#     image_url: str | None = None
-
-#     class Config:
-#         orm_mode = True
-
-# @app.post("/products/create", response_model=ProductOut)
-# def add_product(payload: ProductCreateIn = Body(...), db: Session = Depends(get_db)):
-#     user = db.query(User).filter(User.id == payload.user_id).first()
-#     if not user:
-#         raise HTTPException(status_code=404, detail="User not found")
-
-#     business = db.query(Business).filter(Business.owner_id == user.id).first()
-#     if not business:
-#         raise HTTPException(status_code=404, detail="Business not found for user")
-
-#     prod = Product(
-#         business_id = business.id,
-#         title       = payload.title,
-#         price       = float(payload.price),
-#         sku         = payload.sku,
-#         description = payload.description,
-#         keywords    = ",".join(payload.keywords) if payload.keywords else None,
-#         image_url   = payload.image_url
-#     )
-#     db.add(prod)
-#     db.commit()
-#     db.refresh(prod)
-#     return prod
-
-# def upload_image_to_cloudinary(file):
-#     try:
-#         result = cloudinary.uploader.upload(file.file)
-#         return result.get("secure_url")
-#     except Exception as e:
-#         raise HTTPException(status_code=500, detail=f"Upload failed: {str(e)}")
-    
-
-    
-# @app.post("/upload_image")
-# def upload_image(file: UploadFile = File(...)):
-#     try:
-#         image_url = upload_image_to_cloudinary(file)
-#         return {"image_url": image_url}
-#     except Exception as e:
-#         raise HTTPException(status_code=500, detail=str(e))
-
-
-# class ProductSkuRequest(BaseModel):
-#     user_id: int
-#     sku: str
-
-# class ProductEditRequest(BaseModel):
-#     user_id: int
-#     sku: str
-#     title: str
-#     price: Decimal
-#     description: str | None = None
-#     keywords: list[str] = []
-#     image_url: str | None = None
-
-
-
-
-
-# ####
-
-
-
-# @app.post("/products/get_by_sku")
-# def get_product_by_sku(payload: ProductSkuRequest = Body(...), db: Session = Depends(get_db)):
-#     user = db.query(User).filter(User.id == payload.user_id).first()
-#     if not user:
-#         raise HTTPException(status_code=404, detail="User not found")
-
-#     business = db.query(Business).filter(Business.owner_id == user.id).first()
-#     if not business:
-#         raise HTTPException(status_code=404, detail="Business not found for user")
-
-#     product = db.query(Product).filter(
-#         Product.business_id == business.id,
-#         Product.sku == payload.sku
-#     ).first()
-
-#     if not product:
-#         raise HTTPException(status_code=404, detail="Product not found")
-
-#     return {
-#         "id": product.id,
-#         "title": product.title,
-#         "price": float(product.price),
-#         "sku": product.sku,
-#         "description": product.description,
-#         "keywords": product.keywords.split(",") if product.keywords else [],
-#         "image_url": product.image_url
-#     }
-
-
-
-
-
-# @app.post("/products/edit")
-# def edit_product(payload: ProductEditRequest = Body(...), db: Session = Depends(get_db)):
-#     user = db.query(User).filter(User.id == payload.user_id).first()
-#     if not user:
-#         raise HTTPException(status_code=404, detail="User not found")
-
-#     business = db.query(Business).filter(Business.owner_id == user.id).first()
-#     if not business:
-#         raise HTTPException(status_code=404, detail="Business not found for user")
-
-#     product = db.query(Product).filter(
-#         Product.business_id == business.id,
-#         Product.sku == payload.sku
-#     ).first()
-
-#     if not product:
-#         raise HTTPException(status_code=404, detail="Product not found")
-
-#     # Update fields
-#     product.title = payload.title
-#     product.price = float(payload.price)
-#     product.description = payload.description
-#     product.keywords = ",".join(payload.keywords) if payload.keywords else None
-#     product.image_url = payload.image_url
-
-#     db.commit()
-#     db.refresh(product)
-
-#     return {
-#         "message": "Product updated successfully",
-#         "product": {
-#             "id": product.id,
-#             "title": product.title,
-#             "price": float(product.price),
-#             "sku": product.sku,
-#             "description": product.description,
-#             "keywords": product.keywords.split(",") if product.keywords else [],
-#             "image_url": product.image_url
-#         }
-#     }
-
-
-
-
-# @app.post("/products/delete")
-# def delete_product(payload: ProductSkuRequest = Body(...), db: Session = Depends(get_db)):
-#     user = db.query(User).filter(User.id == payload.user_id).first()
-#     if not user:
-#         raise HTTPException(status_code=404, detail="User not found")
-
-#     business = db.query(Business).filter(Business.owner_id == user.id).first()
-#     if not business:
-#         raise HTTPException(status_code=404, detail="Business not found for user")
-
-#     product = db.query(Product).filter(
-#         Product.business_id == business.id,
-#         Product.sku == payload.sku
-#     ).first()
-
-#     if not product:
-#         raise HTTPException(status_code=404, detail="Product not found")
-
-#     db.delete(product)
-#     db.commit()
-
-#     return {
-#         "message": "Product deleted successfully",
-#         "sku": payload.sku
-#     }
-
-
-
-
-
-
-#### NEW STUFFFF:
-# class ProductIdRequest(BaseModel):
-#     user_id: int
-#     product_id: int
-
-# @app.post("/products/get_by_id")
-# def get_product_by_id(payload: ProductIdRequest = Body(...), db: Session = Depends(get_db)):
-#     user = db.query(User).filter(User.id == payload.user_id).first()
-#     if not user:
-#         raise HTTPException(status_code=404, detail="User not found")
-
-#     business = db.query(Business).filter(Business.owner_id == user.id).first()
-#     if not business:
-#         raise HTTPException(status_code=404, detail="Business not found for user")
-
-#     product = db.query(Product).filter(
-#         Product.business_id == business.id,
-#         Product.id == payload.product_id
-#     ).first()
-
-#     if not product:
-#         raise HTTPException(status_code=404, detail="Product not found")
-
-#     return {
-#         "id": product.id,
-#         "title": product.title,
-#         "price": float(product.price),
-#         "sku": product.sku,
-#         "description": product.description,
-#         "keywords": product.keywords.split(",") if product.keywords else [],
-#         "image_url": product.image_url
-#     }
-
-# class ProductEditByIdRequest(BaseModel):
-#     user_id: int
-#     product_id: int
-#     title: str
-#     price: Decimal
-#     sku: str | None = None
-#     description: str | None = None
-#     keywords: list[str] = []
-#     image_url: str | None = None
-
-# @app.post("/products/edit_by_id")
-# def edit_product_by_id(payload: ProductEditByIdRequest = Body(...), db: Session = Depends(get_db)):
-#     user = db.query(User).filter(User.id == payload.user_id).first()
-#     if not user:
-#         raise HTTPException(status_code=404, detail="User not found")
-
-#     business = db.query(Business).filter(Business.owner_id == user.id).first()
-#     if not business:
-#         raise HTTPException(status_code=404, detail="Business not found for user")
-
-#     product = db.query(Product).filter(
-#         Product.business_id == business.id,
-#         Product.id == payload.product_id
-#     ).first()
-
-#     if not product:
-#         raise HTTPException(status_code=404, detail="Product not found")
-
-#     product.title = payload.title
-#     product.price = float(payload.price)
-#     product.sku = payload.sku
-#     product.description = payload.description
-#     product.keywords = ",".join(payload.keywords) if payload.keywords else None
-#     product.image_url = payload.image_url
-
-#     db.commit()
-#     db.refresh(product)
-
-#     return {
-#         "message": "Product updated successfully",
-#         "product": {
-#             "id": product.id,
-#             "title": product.title,
-#             "price": float(product.price),
-#             "sku": product.sku,
-#             "description": product.description,
-#             "keywords": product.keywords.split(",") if product.keywords else [],
-#             "image_url": product.image_url
-#         }
-#     }
-
-# @app.post("/products/delete_by_id")
-# def delete_product_by_id(payload: ProductIdRequest = Body(...), db: Session = Depends(get_db)):
-#     user = db.query(User).filter(User.id == payload.user_id).first()
-#     if not user:
-#         raise HTTPException(status_code=404, detail="User not found")
-
-#     business = db.query(Business).filter(Business.owner_id == user.id).first()
-#     if not business:
-#         raise HTTPException(status_code=404, detail="Business not found for user")
-
-#     product = db.query(Product).filter(
-#         Product.business_id == business.id,
-#         Product.id == payload.product_id
-#     ).first()
-
-#     if not product:
-#         raise HTTPException(status_code=404, detail="Product not found")
-
-#     db.delete(product)
-#     db.commit()
-
-#     return {
-#         "message": "Product deleted successfully",
-#         "product_id": payload.product_id
-#     }
-
-
 
 
 
