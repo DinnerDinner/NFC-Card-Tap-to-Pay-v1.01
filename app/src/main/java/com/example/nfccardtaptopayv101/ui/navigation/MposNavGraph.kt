@@ -34,10 +34,10 @@ fun MposNavGraph(
             ProductManagerScreen(
                 onBack = onBackToDashboard,
                 onAddProduct = { navController.navigate(MposScreens.AddProduct.route) },
-                onEditProduct = { sku ->
+                onEditProduct = { productId ->
                     navController.currentBackStackEntry
                         ?.savedStateHandle
-                        ?.set("edit_sku", sku)
+                        ?.set("edit_product_id", productId)
                     navController.navigate(MposScreens.EditDeleteProduct.route)
                 }
             )
@@ -48,10 +48,10 @@ fun MposNavGraph(
         }
 
         composable(MposScreens.EditDeleteProduct.route) {
-            val sku = navController.previousBackStackEntry
+            val productId = navController.previousBackStackEntry
                 ?.savedStateHandle
-                ?.get<String>("edit_sku") ?: ""
-            EditDeleteProductScreen(sku = sku, onBack = { navController.popBackStack() })
+                ?.get<Int>("edit_product_id") ?: -1
+            EditDeleteProductScreen(productId = productId, onBack = { navController.popBackStack() })
         }
 
         composable(MposScreens.SalesPage.route) {
@@ -60,7 +60,7 @@ fun MposNavGraph(
                 vm = salesPageViewModel,
                 onBack = onBackToDashboard,
                 onCheckoutClicked = { navController.navigate(MposScreens.Checkout.route) },
-                onScanClicked = { /* TODO */ }
+                onScanClicked = { /* TODO SOON */ }
             )
         }
 

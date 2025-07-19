@@ -30,13 +30,14 @@ import coil.request.ImageRequest
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EditDeleteProductScreen(
-    sku: String,
+    productId: Int,
     vm: EditDeleteProductViewModel = viewModel(),
     onBack: () -> Unit
 ) {
-    LaunchedEffect(sku) {
-        vm.setSku(sku)
+    LaunchedEffect(productId) {
+        vm.setProductId(productId)
     }
+
     val context = LocalContext.current
     val state by vm.uiState.collectAsState()
     val scroll = rememberScrollState()
