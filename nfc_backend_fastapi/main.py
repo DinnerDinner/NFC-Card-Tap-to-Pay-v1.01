@@ -11,8 +11,8 @@ from fastapi import FastAPI, Depends, HTTPException, status
 from pydantic import BaseModel, EmailStr
 from sqlalchemy.orm import Session
 from fastapi import Request
-from db_files.database import SessionLocal, engine, Base
-from db_files.models import User
+from .db_files.database import SessionLocal, engine, Base
+from .db_files.models import User
 from pydantic import BaseModel, EmailStr, validator
 from datetime import date
 import re
