@@ -3,15 +3,10 @@ from sqlalchemy.orm import sessionmaker, declarative_base
 from sqlalchemy import create_engine, text
 
 # Update this with your Docker PostgreSQL connection details
-DATABASE_URL = "postgresql://nfcuser:nfcpass@localhost:5432/nfcwallet"
+SQLALCHEMY_DATABASE_URL = "postgresql://postgres.fjqdbfspwnjhbimgasrg:DinnerDinner2024@aws-0-us-east-2.pooler.supabase.com:5432/postgres"
 
-# Create SQLAlchemy engine
-engine = create_engine(DATABASE_URL)
-
-# Create a configured "Session" class
+engine = create_engine(SQLALCHEMY_DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
-# Base class for models
 Base = declarative_base()
 
 
