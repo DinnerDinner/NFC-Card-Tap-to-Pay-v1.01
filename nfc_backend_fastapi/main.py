@@ -297,49 +297,6 @@ class BusinessSetupResponse(BaseModel):
     owner_email: EmailStr
     message: str
 
-class ProductsListRequest(BaseModel):
-    user_id: int
-
-class ProductCreateIn(BaseModel):
-    user_id: int
-    title: str = Field(..., min_length=2, max_length=80)
-    price: Decimal = Field(gt=0, max_digits=9, decimal_places=2)
-    sku: Optional[str] = None
-    description: Optional[str] = None
-    keywords: List[str] = []
-    image_url: Optional[str] = None
-
-class ProductOut(BaseModel):
-    id: int
-    title: str
-    price: float
-    sku: Optional[str] = None
-    barcode_number: Optional[str] = None
-    description: Optional[str] = None
-    keywords: Optional[str] = None
-    image_url: Optional[str] = None
-
-    class Config:
-        orm_mode = True
-
-class ProductIdRequest(BaseModel):
-    user_id: int
-    product_id: int
-
-class ProductSkuRequest(BaseModel):
-    user_id: int
-    sku: str
-
-class ProductEditByIdRequest(BaseModel):
-    user_id: int
-    product_id: int
-    title: str
-    price: Decimal
-    sku: Optional[str] = None
-    description: Optional[str] = None
-    keywords: List[str] = []
-    image_url: Optional[str] = None
-
 
 @app.post("/business/setup", response_model=BusinessSetupResponse)
 def setup_business(payload: BusinessSetupPayload, db: Session = Depends(get_db)):
@@ -388,6 +345,65 @@ def check_business(payload: dict, db: Session = Depends(get_db)):
 
 
 
+
+
+
+class ProductsListRequest(BaseModel):
+    user_id: int
+
+class ProductOut(BaseModel):
+    id: int
+    title: str
+    price: float
+    sku: str | None = None
+    barcode_number: str | None = None
+    description: str | None = None
+    keywords: str | None = None
+    image_url: str | None = None
+
+
+    class Config:
+        orm_mode = True
+
+
+@app.post("/products/list", response_model=List[ProductOut])
+def list_products(payload: ProductsListRequest, db: Session = Depends(get_db)):
+    business = db.query(Business).filter(Business.owner_id == payload.user_id).first()
+    if not business:
+        raise HTTPException(status_code=404, detail="Business not found for user")
+    products = db.query(Product).filter(Product.business_id == business.id).all()
+    return products
+
+
+
+
+
+
+
+class ProductCreateIn(BaseModel):
+    user_id: int
+    title: str = Field(..., min_length=2, max_length=80)
+    price: Annotated[Decimal, Field(gt=0, max_digits=9, decimal_places=2)]
+    sku: str | None = None
+    description: str | None = None
+    keywords: list[str] = []
+    image_url: str | None = None
+
+
+class ProductOut(BaseModel):
+    id: int
+    title: str
+    price: float
+    sku: str | None = None
+    description: str | None = None
+    keywords: str | None = None
+    image_url: str | None = None
+
+    class Config:
+        orm_mode = True
+
+
+
 @app.post("/products/create", response_model=ProductOut)
 def add_product(payload: ProductCreateIn = Body(...), db: Session = Depends(get_db)):
     user = db.query(User).filter(User.id == payload.user_id).first()
@@ -413,20 +429,44 @@ def add_product(payload: ProductCreateIn = Body(...), db: Session = Depends(get_
     return prod
 
 
+def upload_image_to_cloudinary(file):
+    try:
+        result = cloudinary.uploader.upload(file.file)
+        return result.get("secure_url")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Upload failed: {str(e)}")
 
-@app.post("/products/list", response_model=List[ProductOut])
-def list_products(payload: ProductsListRequest, db: Session = Depends(get_db)):
-    business = db.query(Business).filter(Business.owner_id == payload.user_id).first()
-    if not business:
-        raise HTTPException(status_code=404, detail="Business not found for user")
-    products = db.query(Product).filter(Product.business_id == business.id).all()
-    return products
+@app.post("/upload_image")
+def upload_image(file: UploadFile = File(...)):
+    image_url = upload_image_to_cloudinary(file)
+    return {"image_url": image_url}
 
 
 
-#Everything using product_id :
 
-@app.post("/products/get_by_id", response_model=ProductOut)
+
+
+class ProductIdRequest(BaseModel):
+    user_id: int
+    product_id: int
+
+class ProductSkuRequest(BaseModel):
+    user_id: int
+    sku: str
+
+class ProductEditByIdRequest(BaseModel):
+    user_id: int
+    product_id: int
+    sku: str
+    title: str
+    price: Decimal
+    description: str | None = None
+    keywords: list[str] = []
+    image_url: str | None = None
+
+
+
+@app.post("/products/get_by_id")
 def get_product_by_id(payload: ProductIdRequest = Body(...), db: Session = Depends(get_db)):
     user = db.query(User).filter(User.id == payload.user_id).first()
     if not user:
@@ -455,8 +495,7 @@ def get_product_by_id(payload: ProductIdRequest = Body(...), db: Session = Depen
     }
 
 
-
-@app.post("/products/edit_by_id", response_model=ProductOut)
+@app.post("/products/edit_by_id")
 def edit_product_by_id(payload: ProductEditByIdRequest = Body(...), db: Session = Depends(get_db)):
     user = db.query(User).filter(User.id == payload.user_id).first()
     if not user:
@@ -525,20 +564,12 @@ def delete_product_by_id(payload: ProductIdRequest = Body(...), db: Session = De
     }
 
 
-def upload_image_to_cloudinary(file):
-    try:
-        result = cloudinary.uploader.upload(file.file)
-        return result.get("secure_url")
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Upload failed: {str(e)}")
 
-@app.post("/upload_image")
-def upload_image(file: UploadFile = File(...)):
-    image_url = upload_image_to_cloudinary(file)
-    return {"image_url": image_url}
+
+
+
 
 
 
 print("V2 Achieved")
-
 
