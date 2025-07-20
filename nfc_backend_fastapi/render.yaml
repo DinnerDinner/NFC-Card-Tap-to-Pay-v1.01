@@ -8,4 +8,4 @@ services:
     startCommand: uvicorn nfc_backend_fastapi.main:app --host=0.0.0.0 --port=10000
     envVars:
       - key: DATABASE_URL
-        value: <we will fill this in later>
+        value: postgresql://postgres.fjqdbfspwnjhbimgasrg:DinnerDinner2024@aws-0-us-east-2.pooler.supabase.com:5432/postgres
