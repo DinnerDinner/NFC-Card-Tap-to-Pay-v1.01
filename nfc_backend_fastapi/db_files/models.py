@@ -1,6 +1,4 @@
-import sys
-import os
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+print("Loading models.py")
 
 from sqlalchemy import Column, Integer, String, Date, DateTime, Boolean, ForeignKey, Float
 from sqlalchemy.orm import relationship
