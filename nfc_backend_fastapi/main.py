@@ -11,12 +11,12 @@ from fastapi import FastAPI, Depends, HTTPException, status
 from pydantic import BaseModel, EmailStr
 from sqlalchemy.orm import Session
 from fastapi import Request
-from .db_files.database import SessionLocal, engine, Base
-from .db_files.models import User
+from nfc_backend_fastapi.db_files.database import SessionLocal, engine, Base
+from nfc_backend_fastapi.db_files.models import User, Business, Product
+
 from pydantic import BaseModel, EmailStr, validator
 from datetime import date
 import re
-from db_files.models import Business, Product 
 
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -30,6 +30,7 @@ from decimal import Decimal
 from typing import List, Optional, Annotated
 import cloudinary
 import cloudinary.uploader
+
 
 Base.metadata.create_all(bind=engine)
 app = FastAPI()
