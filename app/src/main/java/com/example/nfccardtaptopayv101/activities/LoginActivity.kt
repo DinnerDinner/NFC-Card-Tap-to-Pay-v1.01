@@ -1,4 +1,4 @@
-package com.example.nfccardtaptopayv101
+package com.example.nfccardtaptopayv101.activities
 
 import android.content.Context
 import android.content.Intent

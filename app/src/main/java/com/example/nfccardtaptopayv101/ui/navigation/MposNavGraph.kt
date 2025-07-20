@@ -8,7 +8,11 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.example.nfccardtaptopayv101.ui.screens.*
+import com.example.nfccardtaptopayv101.ui.screens.mpos.AddProductScreen
+import com.example.nfccardtaptopayv101.ui.screens.mpos.CheckoutScreen
+import com.example.nfccardtaptopayv101.ui.screens.mpos.EditDeleteProductScreen
+import com.example.nfccardtaptopayv101.ui.screens.mpos.ProductManagerScreen
+import com.example.nfccardtaptopayv101.ui.screens.mpos.SalesPageScreen
 import com.example.nfccardtaptopayv101.ui.viewmodel.mpos.SalesPageViewModel
 
 sealed class MposScreens(val route: String) {

@@ -1,6 +1,6 @@
 @file:OptIn(ExperimentalMaterial3Api::class)
 
-package com.example.nfccardtaptopayv101.ui
+package com.example.nfccardtaptopayv101.ui.screens
 
 import android.content.Context
 import android.content.Intent
@@ -12,11 +12,10 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import com.example.nfccardtaptopayv101.LoginActivity
-import com.example.nfccardtaptopayv101.TaptoTransferMachine
+import com.example.nfccardtaptopayv101.activities.LoginActivity
+import com.example.nfccardtaptopayv101.activities.TaptoTransferMachine
 import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
-import androidx.lifecycle.viewmodel.compose.viewModel
 
 
 // --- Logic + State Holder ---

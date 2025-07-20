@@ -1,4 +1,4 @@
-package com.example.nfccardtaptopayv101.ui
+package com.example.nfccardtaptopayv101.ui.screens
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons

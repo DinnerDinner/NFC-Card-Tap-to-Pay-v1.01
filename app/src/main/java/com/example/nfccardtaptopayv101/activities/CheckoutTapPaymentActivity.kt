@@ -1,4 +1,4 @@
-package com.example.nfccardtaptopayv101
+package com.example.nfccardtaptopayv101.activities
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -6,7 +6,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.unit.dp
 import com.airbnb.lottie.compose.*
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.res.stringResource
 import com.example.nfccardtaptopayv101.R
 import android.app.Activity
 import android.app.PendingIntent
@@ -18,17 +17,12 @@ import android.nfc.Tag
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.layout.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.MediaType.Companion.toMediaType

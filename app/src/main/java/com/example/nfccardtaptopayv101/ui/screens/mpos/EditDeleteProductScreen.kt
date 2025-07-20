@@ -1,4 +1,4 @@
-package com.example.nfccardtaptopayv101.ui.screens
+package com.example.nfccardtaptopayv101.ui.screens.mpos
 
 import android.widget.Toast
 import android.net.Uri
@@ -24,7 +24,6 @@ import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
 import com.example.nfccardtaptopayv101.ui.viewmodel.mpos.EditDeleteProductUiState
 import com.example.nfccardtaptopayv101.ui.viewmodel.mpos.EditDeleteProductViewModel
-import java.io.File
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

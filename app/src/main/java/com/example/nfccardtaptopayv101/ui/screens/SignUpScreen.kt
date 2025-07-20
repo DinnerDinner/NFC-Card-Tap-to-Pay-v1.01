@@ -1,4 +1,4 @@
-package com.example.nfccardtaptopayv101.ui
+package com.example.nfccardtaptopayv101.ui.screens
 
 import android.app.DatePickerDialog
 import android.widget.Toast

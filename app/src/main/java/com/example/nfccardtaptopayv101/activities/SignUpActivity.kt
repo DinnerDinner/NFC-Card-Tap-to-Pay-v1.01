@@ -1,4 +1,4 @@
-package com.example.nfccardtaptopayv101
+package com.example.nfccardtaptopayv101.activities
 
 import android.app.PendingIntent
 import android.content.Intent
@@ -10,7 +10,7 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.lifecycle.lifecycleScope
-import com.example.nfccardtaptopayv101.ui.SignUpScreen
+import com.example.nfccardtaptopayv101.ui.screens.SignUpScreen
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext

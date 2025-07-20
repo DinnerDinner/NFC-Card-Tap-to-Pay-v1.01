@@ -1,4 +1,4 @@
-package com.example.nfccardtaptopayv101.ui.screens
+package com.example.nfccardtaptopayv101.ui.screens.mpos
 import androidx.compose.foundation.Image
 import coil.compose.rememberAsyncImagePainter
 
@@ -26,9 +26,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
-import coil.compose.AsyncImage
 import coil.request.ImageRequest
-import com.example.nfccardtaptopayv101.CheckoutTapPaymentActivity
+import com.example.nfccardtaptopayv101.activities.CheckoutTapPaymentActivity
 import com.example.nfccardtaptopayv101.ui.navigation.MposScreens
 import com.example.nfccardtaptopayv101.ui.viewmodel.mpos.SalesPageViewModel
 

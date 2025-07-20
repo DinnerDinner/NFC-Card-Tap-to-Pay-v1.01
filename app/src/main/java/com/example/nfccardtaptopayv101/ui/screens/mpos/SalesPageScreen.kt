@@ -1,6 +1,5 @@
-package com.example.nfccardtaptopayv101.ui.screens
+package com.example.nfccardtaptopayv101.ui.screens.mpos
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.foundation.Image
 import androidx.compose.ui.layout.ContentScale
 import coil.compose.AsyncImage
 import coil.request.ImageRequest

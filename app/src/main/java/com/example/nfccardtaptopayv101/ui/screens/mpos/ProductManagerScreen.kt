@@ -1,4 +1,4 @@
-package com.example.nfccardtaptopayv101.ui.screens
+package com.example.nfccardtaptopayv101.ui.screens.mpos
 
 import androidx.compose.ui.layout.ContentScale
 import coil.compose.AsyncImage
@@ -21,8 +21,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.nfccardtaptopayv101.ui.viewmodel.mpos.ProductManagerViewModel
 import kotlinx.coroutines.launch
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
-import com.example.nfccardtaptopayv101.R  // your app's R file, adjust package name accordingly
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
