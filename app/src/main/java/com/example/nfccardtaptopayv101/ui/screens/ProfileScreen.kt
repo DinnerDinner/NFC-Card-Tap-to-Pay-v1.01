@@ -215,7 +215,7 @@ private fun sendUpdateRequest(context: Context, data: JSONObject, userId: Int) {
     data.put("user_id", userId)
     val requestBody = data.toString().toRequestBody(mediaType)
     val request = Request.Builder()
-        .url("https://promoted-quetzal-visually.ngrok-free.app/update-profile")
+        .url("https://nfc-fastapi-backend.onrender.com/update-profile")
         .post(requestBody)
         .build()
 
@@ -262,7 +262,7 @@ private fun fetchProfile(context: Context, onResult: (JSONObject?) -> Unit) {
     val mediaType = "application/json".toMediaType()
     val requestBody = json.toString().toRequestBody(mediaType)
     val request = Request.Builder()
-        .url("https://promoted-quetzal-visually.ngrok-free.app/profile")
+        .url("https://nfc-fastapi-backend.onrender.com/profile")
         .post(requestBody)
         .build()
 

@@ -17,7 +17,7 @@ import org.json.JSONObject
 import java.io.File
 import java.io.IOException
 
-private const val BASE_URL = "https://promoted-quetzal-visually.ngrok-free.app"
+private const val BASE_URL = "https://nfc-fastapi-backend.onrender.com"
 
 sealed class EditDeleteProductUiState {
     object Idle : EditDeleteProductUiState()

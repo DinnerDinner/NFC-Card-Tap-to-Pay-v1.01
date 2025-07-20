@@ -121,7 +121,7 @@ class LoginActivity : ComponentActivity() {
                         }
                         val body = json.toString().toRequestBody(mediaType)
                         val request = Request.Builder()
-                            .url("https://promoted-quetzal-visually.ngrok-free.app/login") // Your backend login URL
+                            .url("https://nfc-fastapi-backend.onrender.com/login") // Your backend login URL
                             .post(body)
                             .build()
 

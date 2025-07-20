@@ -91,7 +91,7 @@ class TaptoTransferMachine : ComponentActivity() {
         lifecycleScope.launch(Dispatchers.IO) {
             val body = json.toString().toRequestBody("application/json".toMediaType())
             val request = Request.Builder()
-                .url("https://promoted-quetzal-visually.ngrok-free.app/transfer")
+                .url("https://nfc-fastapi-backend.onrender.com/transfer")
                 .post(body)
                 .build()
 

@@ -72,7 +72,7 @@ class SignUpActivity : ComponentActivity() {
             val body = pendingJson.toString()
                 .toRequestBody("application/json".toMediaType())
             val request = Request.Builder()
-                .url("https://promoted-quetzal-visually.ngrok-free.app/register_user/")
+                .url("https://nfc-fastapi-backend.onrender.com/register_user/")
                 .post(body)
                 .build()
 
