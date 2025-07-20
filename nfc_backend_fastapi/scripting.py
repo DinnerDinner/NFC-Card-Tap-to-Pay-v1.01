@@ -7,8 +7,7 @@ docker start nfc-postgres
 To start the server local:
 python -m venv env
 env\Scripts\activate
-uvicorn main:app --host 127.0.0.1 --port 8000
-
+uvicorn nfc_backend_fastapi.main:app --host 127.0.0.1 --port 8000
 
 To start the LocalTunnel (replacing ngrok): 
 lt --port 8000 --subdomain nfcwalletdev  # Try reusing this every time
