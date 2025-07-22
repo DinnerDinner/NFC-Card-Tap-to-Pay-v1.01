@@ -586,25 +586,25 @@ def scan_product(payload: ProductScanRequest, db: Session = Depends(get_db)):
 
 
 
-    # product = db.query(Product).filter(
-    #     Product.business_id == business.id,
-    #     Product.sku == payload.detected_code
-    # ).first()
+    product = db.query(Product).filter(
+        Product.business_id == business.id,
+        Product.sku == payload.detected_code
+    ).first()
 
-    # if not product:
-    #     raise HTTPException(status_code=404, detail=f"No product with scanned code: {payload.detected_code}")
+    if not product:
+        raise HTTPException(status_code=404, detail=f"No product with scanned code: {payload.detected_code}")
 
     return {
         "message": f"✅ Scan successful! Found product for code {payload.detected_code}",
-        # "product": {
-        #     "id": product.id,
-        #     "title": product.title,
-        #     "price": float(product.price),
-        #     "sku": product.sku,
-        #     "description": product.description,
-        #     "keywords": product.keywords.split(",") if product.keywords else [],
-        #     "image_url": product.image_url
-        # }
+        "product": {
+            "id": product.id,
+            "title": product.title,
+            "price": float(product.price),
+            "sku": product.sku,
+            "description": product.description,
+            "keywords": product.keywords.split(",") if product.keywords else [],
+            "image_url": product.image_url
+        }
     }
 
 
