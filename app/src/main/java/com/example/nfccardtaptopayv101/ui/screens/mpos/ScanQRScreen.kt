@@ -1,7 +1,7 @@
 @file:OptIn(ExperimentalMaterial3Api::class)
 
 package com.example.nfccardtaptopayv101.ui.screens.mpos
-
+import android.widget.Toast
 import android.Manifest
 import android.content.pm.PackageManager
 import android.util.Log
@@ -33,7 +33,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.nfccardtaptopayv101.ui.viewmodel.mpos.ScanQrState
 import com.example.nfccardtaptopayv101.ui.viewmodel.mpos.ScanQrViewModel
 import kotlinx.coroutines.launch
-@OptIn(ExperimentalMaterial3Api::class)
 
 @Composable
 fun ScanQRScreen(
@@ -41,6 +40,7 @@ fun ScanQRScreen(
     onBack: () -> Unit,
     onSuccessScan: (String) -> Unit
 ) {
+    val state by vm.state.collectAsState()
     val context = LocalContext.current
     var hasCameraPermission by remember {
         mutableStateOf(
@@ -63,6 +63,18 @@ fun ScanQRScreen(
         }
     }
 
+    LaunchedEffect(state) {
+        when (val currentState = state) {
+            is ScanQrState.ScanSuccess -> {
+                Toast.makeText(context, currentState.message, Toast.LENGTH_LONG).show()
+                onSuccessScan(currentState.message)
+            }
+            is ScanQrState.Error -> {
+                Toast.makeText(context, currentState.message, Toast.LENGTH_LONG).show()
+            }
+            else -> { /* Handle other states */ }
+        }
+    }
     if (!hasCameraPermission) {
         Box(
             modifier = Modifier.fillMaxSize(),
