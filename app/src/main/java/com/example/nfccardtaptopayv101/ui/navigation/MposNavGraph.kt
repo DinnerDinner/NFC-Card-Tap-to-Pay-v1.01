@@ -12,6 +12,7 @@ import com.example.nfccardtaptopayv101.ui.screens.mpos.AddProductScreen
 import com.example.nfccardtaptopayv101.ui.screens.mpos.CheckoutScreen
 import com.example.nfccardtaptopayv101.ui.screens.mpos.EditDeleteProductScreen
 import com.example.nfccardtaptopayv101.ui.screens.mpos.ProductManagerScreen
+import com.example.nfccardtaptopayv101.ui.screens.mpos.ScanQRScreen
 import com.example.nfccardtaptopayv101.ui.screens.mpos.SalesPageScreen
 import com.example.nfccardtaptopayv101.ui.viewmodel.mpos.SalesPageViewModel
 
@@ -22,6 +23,8 @@ sealed class MposScreens(val route: String) {
         fun createRoute(productId: Int) = "edit_delete_product/$productId"}
     object SalesPage : MposScreens("sales_page")
     object Checkout : MposScreens("checkout")
+
+    object ScanQr : MposScreens("scan_qr")
 }
 
 @Composable
@@ -64,7 +67,7 @@ fun MposNavGraph(
                 vm = salesPageViewModel,
                 onBack = onBackToDashboard,
                 onCheckoutClicked = { navController.navigate(MposScreens.Checkout.route) },
-                onScanClicked = { /* TODO SOON */ }
+                onScanClicked = { navController.navigate(MposScreens.ScanQr.route) }  // Navigate to Scan QR here
             )
         }
 
@@ -73,6 +76,19 @@ fun MposNavGraph(
                 vm = salesPageViewModel,
                 navController = navController,
                 onBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(MposScreens.ScanQr.route) {
+            // You can instantiate ScanQrViewModel here or let the screen do it
+            ScanQRScreen(
+                onBack = { navController.popBackStack() },
+                onSuccessScan = { barcode ->
+                    // For now, just pop back to SalesPage (or wherever you want)
+                    // You can pass barcode as argument or handle next later
+                    navController.popBackStack()
+                    // TODO: Later navigate to ScanConfirmScreen with barcode
+                }
             )
         }
 

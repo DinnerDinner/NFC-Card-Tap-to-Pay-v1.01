@@ -568,6 +568,39 @@ def delete_product_by_id(payload: ProductIdRequest = Body(...), db: Session = De
 
 
 
+class BarcodeLookupRequest(BaseModel):
+    user_id: int
+    barcode: str
+
+class ProductOut(BaseModel):
+    id: int
+    title: str
+    price: Decimal
+    description: str | None = None
+    sku: str
+    keywords: list[str] = []
+    image_url: str | None = None
+
+
+@app.post("/product/barcode", response_model=ProductOut)
+def lookup_product_by_barcode(payload: BarcodeLookupRequest, db: Session = Depends(get_db)):
+    user_id = payload.user_id
+    barcode = payload.barcode
+
+    business = db.query(Business).filter(Business.user_id == user_id).first()
+    if not business:
+        raise HTTPException(status_code=404, detail="Business not found")
+
+    product = db.query(Product).filter(
+        Product.business_id == business.id,
+        Product.sku == barcode
+    ).first()
+
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found")
+
+    return product
+
 
 
 
