@@ -568,39 +568,44 @@ def delete_product_by_id(payload: ProductIdRequest = Body(...), db: Session = De
 
 
 
-class BarcodeLookupRequest(BaseModel):
+
+class ProductScanRequest(BaseModel):
     user_id: int
-    barcode: str
+    # business_id: int
+    detected_code: str
 
-class ProductOut(BaseModel):
-    id: int
-    title: str
-    price: Decimal
-    description: str | None = None
-    sku: str
-    keywords: list[str] = []
-    image_url: str | None = None
+@app.post("/products/scan")
+def scan_product(payload: ProductScanRequest, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.id == payload.user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
 
-
-@app.post("/product/barcode", response_model=ProductOut)
-def lookup_product_by_barcode(payload: BarcodeLookupRequest, db: Session = Depends(get_db)):
-    user_id = payload.user_id
-    barcode = payload.barcode
-
-    business = db.query(Business).filter(Business.user_id == user_id).first()
+    business = db.query(Business).filter(Business.owner_id == user.id).first()
     if not business:
-        raise HTTPException(status_code=404, detail="Business not found")
+        raise HTTPException(status_code=404, detail="Business not found for user")
 
-    product = db.query(Product).filter(
-        Product.business_id == business.id,
-        Product.sku == barcode
-    ).first()
 
-    if not product:
-        raise HTTPException(status_code=404, detail="Product not found")
 
-    return product
+    # product = db.query(Product).filter(
+    #     Product.business_id == business.id,
+    #     Product.sku == payload.detected_code
+    # ).first()
 
+    # if not product:
+    #     raise HTTPException(status_code=404, detail=f"No product with scanned code: {payload.detected_code}")
+
+    return {
+        "message": f"✅ Scan successful! Found product for code {payload.detected_code}",
+        # "product": {
+        #     "id": product.id,
+        #     "title": product.title,
+        #     "price": float(product.price),
+        #     "sku": product.sku,
+        #     "description": product.description,
+        #     "keywords": product.keywords.split(",") if product.keywords else [],
+        #     "image_url": product.image_url
+        # }
+    }
 
 
 
