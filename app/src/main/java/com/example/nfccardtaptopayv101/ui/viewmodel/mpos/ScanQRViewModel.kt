@@ -106,6 +106,10 @@ class ScanQrViewModel(private val appContext: Context) : ViewModel() {
         }
     }
 
+    fun clearAndReset() {
+        resetScan()
+        startScan()
+    }
     /**
      * Call this from the camera analyzer when a barcode is detected.
      */

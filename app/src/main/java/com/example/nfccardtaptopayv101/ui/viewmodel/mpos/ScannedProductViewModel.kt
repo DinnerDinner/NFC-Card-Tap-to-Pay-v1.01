@@ -94,4 +94,9 @@ class ScannedProductViewModel(
             "Product: ${product?.title}, ID: $currentProductId, Code: $code"
         )
     }
+
+    fun clearState() {
+        _state.value = ScannedProductState.Loading // or whatever your initial state should be
+        // Clear any other internal state variables if needed
+    }
 }

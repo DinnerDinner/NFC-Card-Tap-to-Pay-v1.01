@@ -41,6 +41,7 @@ fun ScanQRScreen(
     onBack: () -> Unit,
     onNavigateToScannedProduct: () -> Unit
 ) {
+
     val state by vm.state.collectAsState()
     val context = LocalContext.current
 
@@ -60,7 +61,7 @@ fun ScanQRScreen(
         if (!hasCameraPermission) permissionLauncher.launch(Manifest.permission.CAMERA)
     }
 
-    // Initialize scanning when screen loads
+    // Initialize scanning when screen loads - ONLY ONCE HERE
     LaunchedEffect(Unit) {
         vm.resetScan()
         vm.startScan()
@@ -70,11 +71,9 @@ fun ScanQRScreen(
     LaunchedEffect(state) {
         when (state) {
             is ScanQrState.NavigateToScannedProduct -> {
-                // Navigate to scanned product screen
                 onNavigateToScannedProduct()
             }
             is ScanQrState.ScanSuccess -> {
-                // Show brief success message (optional)
                 Toast.makeText(
                     context,
                     "✅ Product found!",
@@ -82,12 +81,7 @@ fun ScanQRScreen(
                 ).show()
             }
             is ScanQrState.Error -> {
-                // Show error message
-//                Toast.makeText(
-//                    context,
-//                    state.message,
-//                    Toast.LENGTH_LONG
-//                ).show()
+                // Show error message if needed
             }
             else -> { /* no op */ }
         }
@@ -118,6 +112,7 @@ fun ScanQRScreen(
     }
 
     ScanQRContent(vm = vm, onBack = onBack)
+
 }
 
 @Composable
@@ -141,40 +136,57 @@ private fun ScanQRContent(
 
     var cameraBound by remember { mutableStateOf(false) }
 
-    LaunchedEffect(Unit) {
-        vm.startScan()
+    // FIXED: Only bind camera when we have proper state and avoid double initialization
+    LaunchedEffect(state) {
+        // Only bind camera when we're in detecting state and haven't bound yet
+        if (state is ScanQrState.Detecting && !cameraBound) {
+            try {
+                val cameraProvider = ProcessCameraProvider.getInstance(context).get()
 
-        try {
-            val cameraProvider = ProcessCameraProvider.getInstance(context).get()
-
-            val preview = Preview.Builder().build().also {
-                it.setSurfaceProvider(previewView.surfaceProvider)
-            }
-
-            @androidx.camera.core.ExperimentalGetImage
-            val imageAnalysis = ImageAnalysis.Builder()
-                .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
-                .build()
-                .apply {
-                    setAnalyzer(ContextCompat.getMainExecutor(context),
-                        vm.getImageAnalyzer { barcode ->
-                            // Only update ViewModel state here, no navigation calls
-                            vm.onBarcodeDetected(barcode)
-                        }
-                    )
+                val preview = Preview.Builder().build().also {
+                    it.setSurfaceProvider(previewView.surfaceProvider)
                 }
 
-            cameraProvider.unbindAll()
-            cameraProvider.bindToLifecycle(
-                lifecycleOwner,
-                CameraSelector.DEFAULT_BACK_CAMERA,
-                preview,
-                imageAnalysis
-            )
+                @androidx.camera.core.ExperimentalGetImage
+                val imageAnalysis = ImageAnalysis.Builder()
+                    .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+                    .build()
+                    .apply {
+                        setAnalyzer(ContextCompat.getMainExecutor(context),
+                            vm.getImageAnalyzer { barcode ->
+                                vm.onBarcodeDetected(barcode)
+                            }
+                        )
+                    }
 
-            cameraBound = true
-        } catch (e: Exception) {
-            Log.e("ScanQRScreen", "Camera binding failed: ${e.localizedMessage}")
+                cameraProvider.unbindAll()
+                cameraProvider.bindToLifecycle(
+                    lifecycleOwner,
+                    CameraSelector.DEFAULT_BACK_CAMERA,
+                    preview,
+                    imageAnalysis
+                )
+
+                cameraBound = true
+                Log.d("ScanQRScreen", "Camera bound successfully")
+            } catch (e: Exception) {
+                Log.e("ScanQRScreen", "Camera binding failed: ${e.localizedMessage}")
+                cameraBound = false
+            }
+        }
+    }
+
+    // Handle camera unbinding when leaving detecting state
+    LaunchedEffect(state) {
+        if (state !is ScanQrState.Detecting && cameraBound) {
+            try {
+                val cameraProvider = ProcessCameraProvider.getInstance(context).get()
+                cameraProvider.unbindAll()
+                cameraBound = false
+                Log.d("ScanQRScreen", "Camera unbound")
+            } catch (e: Exception) {
+                Log.e("ScanQRScreen", "Camera unbinding failed: ${e.localizedMessage}")
+            }
         }
     }
 
@@ -234,8 +246,22 @@ private fun ScanQRContent(
                     factory = { previewView },
                     modifier = Modifier
                         .fillMaxSize()
-                        .background(Color.Black)
+//                        .background(Color.Black)
                 )
+
+                // Show loading indicator while camera is binding
+                if (!cameraBound && state is ScanQrState.Detecting) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize(),
+//                            .background(Color.Black),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator(
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                }
 
                 // Scan box overlay
                 Box(
@@ -255,20 +281,22 @@ private fun ScanQRContent(
                         )
                 )
 
-                // Dark edges gradient overlay
-                Box(
-                    modifier = Modifier
-                        .matchParentSize()
-                        .background(
-                            Brush.verticalGradient(
-                                colors = listOf(
-                                    Color.Black.copy(alpha = 0.5f),
-                                    Color.Transparent,
-                                    Color.Black.copy(alpha = 0.6f)
+                // Dark edges gradient overlay (only when camera is bound)
+                if (cameraBound) {
+                    Box(
+                        modifier = Modifier
+                            .matchParentSize()
+                            .background(
+                                Brush.verticalGradient(
+                                    colors = listOf(
+                                        Color.Black.copy(alpha = 0.5f),
+                                        Color.Transparent,
+                                        Color.Black.copy(alpha = 0.6f)
+                                    )
                                 )
                             )
-                        )
-                )
+                    )
+                }
 
                 // Loading indicator for backend verification
                 if (state is ScanQrState.BackendVerifying) {
@@ -328,7 +356,11 @@ private fun ScanQRContent(
                 exit = fadeOut()
             ) {
                 Button(
-                    onClick = { vm.resetScan(); vm.startScan() },
+                    onClick = {
+                        cameraBound = false // Reset camera binding state
+                        vm.resetScan()
+                        vm.startScan()
+                    },
                     modifier = Modifier
                         .padding(16.dp)
                         .fillMaxWidth()
@@ -339,8 +371,6 @@ private fun ScanQRContent(
         }
     }
 }
-
-
 
 //@file:OptIn(ExperimentalMaterial3Api::class)
 //
@@ -383,7 +413,7 @@ private fun ScanQRContent(
 //fun ScanQRScreen(
 //    vm: ScanQrViewModel = viewModel(),
 //    onBack: () -> Unit,
-//    onSuccessScan: (String) -> Unit
+//    onNavigateToScannedProduct: () -> Unit
 //) {
 //    val state by vm.state.collectAsState()
 //    val context = LocalContext.current
@@ -404,27 +434,34 @@ private fun ScanQRContent(
 //        if (!hasCameraPermission) permissionLauncher.launch(Manifest.permission.CAMERA)
 //    }
 //
-//    LaunchedEffect(state) {
-//        if (state is ScanQrState.RedirectReady) {
-//            onSuccessScan("") // or navigate back however you want
-//            vm.resetScan()
-//        }
-//    }
+//    // Initialize scanning when screen loads
 //    LaunchedEffect(Unit) {
 //        vm.resetScan()
 //        vm.startScan()
 //    }
-//    // Handle scan success & errors via side effects
+//
+//    // Handle navigation and state changes
 //    LaunchedEffect(state) {
 //        when (state) {
+//            is ScanQrState.NavigateToScannedProduct -> {
+//                // Navigate to scanned product screen
+//                onNavigateToScannedProduct()
+//            }
 //            is ScanQrState.ScanSuccess -> {
-//                val barcode = (state as ScanQrState.ScanSuccess).product.sku ?: ""
-//                Toast.makeText(context, "Scanned: $barcode", Toast.LENGTH_LONG).show()
-//                onSuccessScan(barcode)
-//                vm.resetScan()
+//                // Show brief success message (optional)
+//                Toast.makeText(
+//                    context,
+//                    "✅ Product found!",
+//                    Toast.LENGTH_SHORT
+//                ).show()
 //            }
 //            is ScanQrState.Error -> {
-//                Toast.makeText(context, (state as ScanQrState.Error).message, Toast.LENGTH_LONG).show()
+//                // Show error message
+////                Toast.makeText(
+////                    context,
+////                    state.message,
+////                    Toast.LENGTH_LONG
+////                ).show()
 //            }
 //            else -> { /* no op */ }
 //        }
@@ -457,6 +494,12 @@ private fun ScanQRContent(
 //    ScanQRContent(vm = vm, onBack = onBack)
 //}
 //
+//
+//
+//
+//
+//
+//
 //@Composable
 //private fun ScanQRContent(
 //    vm: ScanQrViewModel,
@@ -465,7 +508,6 @@ private fun ScanQRContent(
 //    val state by vm.state.collectAsState()
 //    val context = LocalContext.current
 //    val lifecycleOwner = LocalLifecycleOwner.current
-//    val coroutineScope = rememberCoroutineScope()
 //
 //    val previewView = remember {
 //        PreviewView(context).apply {
@@ -473,45 +515,44 @@ private fun ScanQRContent(
 //                ViewGroup.LayoutParams.MATCH_PARENT,
 //                ViewGroup.LayoutParams.MATCH_PARENT
 //            )
-//            scaleType = PreviewView.ScaleType.FILL_CENTER
+//            // Try FIT_CENTER for smoother initial preview
+//            scaleType = PreviewView.ScaleType.FIT_CENTER
 //        }
 //    }
 //
-//    var cameraBound by remember { mutableStateOf(false) }
+//    // Manage camera binding lifecycle
+//    DisposableEffect(lifecycleOwner) {
+//        val cameraProviderFuture = ProcessCameraProvider.getInstance(context)
+//        val cameraProvider = cameraProviderFuture.get()
 //
-//    LaunchedEffect(Unit) {
-//        vm.startScan()
+//        val preview = Preview.Builder().build().also {
+//            it.setSurfaceProvider(previewView.surfaceProvider)
+//        }
 //
-//        try {
-//            val cameraProvider = ProcessCameraProvider.getInstance(context).get()
-//
-//            val preview = Preview.Builder().build().also {
-//                it.setSurfaceProvider(previewView.surfaceProvider)
+//        @androidx.camera.core.ExperimentalGetImage
+//        val imageAnalysis = ImageAnalysis.Builder()
+//            .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+//            .build()
+//            .apply {
+//                setAnalyzer(
+//                    ContextCompat.getMainExecutor(context),
+//                    vm.getImageAnalyzer { barcode -> vm.onBarcodeDetected(barcode) }
+//                )
 //            }
-//            @androidx.camera.core.ExperimentalGetImage
-//            val imageAnalysis = ImageAnalysis.Builder()
-//                .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
-//                .build()
-//                .apply {
-//                    setAnalyzer(ContextCompat.getMainExecutor(context),
-//                        vm.getImageAnalyzer { barcode ->
-//                            // IMPORTANT: Only update ViewModel state here, no navigation calls
-//                            vm.onBarcodeDetected(barcode)
-//                        }
-//                    )
-//                }
 //
+//        cameraProvider.unbindAll()
+//        cameraProvider.bindToLifecycle(
+//            lifecycleOwner,
+//            CameraSelector.DEFAULT_BACK_CAMERA,
+//            preview,
+//            imageAnalysis
+//        )
+//
+//        Log.d("ScanQRContent", "Camera bound")
+//
+//        onDispose {
+//            Log.d("ScanQRContent", "Unbinding camera")
 //            cameraProvider.unbindAll()
-//            cameraProvider.bindToLifecycle(
-//                lifecycleOwner,
-//                CameraSelector.DEFAULT_BACK_CAMERA,
-//                preview,
-//                imageAnalysis
-//            )
-//
-//            cameraBound = true
-//        } catch (e: Exception) {
-//            Log.e("ScanQRScreen", "Camera binding failed: ${e.localizedMessage}")
 //        }
 //    }
 //
@@ -529,19 +570,26 @@ private fun ScanQRContent(
 //        bottomBar = {
 //            BottomAppBar {
 //                val label = when (val s = state) {
-//                    is ScanQrState.Detecting -> "Detecting..."
-//                    is ScanQrState.Detected -> "Detected: ${s.barcode}"
-//                    is ScanQrState.BackendVerifying -> "Verifying barcode..."
-//                    is ScanQrState.RedirectReady -> "Redirecting..."
-//                    is ScanQrState.Error -> "Error: ${s.message}"
-//                    else -> ""
+//                    is ScanQrState.Idle -> "Ready to scan..."
+//                    is ScanQrState.Detecting -> "Detecting barcode..."
+//                    is ScanQrState.Detected -> "Code detected: ${s.barcode.take(15)}${if (s.barcode.length > 15) "..." else ""}"
+//                    is ScanQrState.BackendVerifying -> "Verifying product..."
+//                    is ScanQrState.ScanSuccess -> "✅ Product found!"
+//                    is ScanQrState.NavigateToScannedProduct -> "Redirecting..."
+//                    is ScanQrState.Error -> "❌ ${s.message}"
 //                }
+//
 //                Text(
 //                    text = label,
 //                    modifier = Modifier
 //                        .padding(16.dp)
 //                        .fillMaxWidth(),
-//                    style = MaterialTheme.typography.bodyLarge
+//                    style = MaterialTheme.typography.bodyLarge,
+//                    color = when (state) {
+//                        is ScanQrState.Error -> MaterialTheme.colorScheme.error
+//                        is ScanQrState.ScanSuccess, is ScanQrState.NavigateToScannedProduct -> MaterialTheme.colorScheme.primary
+//                        else -> MaterialTheme.colorScheme.onSurface
+//                    }
 //                )
 //            }
 //        }
@@ -572,7 +620,17 @@ private fun ScanQRContent(
 //                    modifier = Modifier
 //                        .fillMaxWidth(0.85f)
 //                        .aspectRatio(1.2f)
-//                        .border(3.dp, MaterialTheme.colorScheme.primary, shape = MaterialTheme.shapes.medium)
+//                        .border(
+//                            width = 3.dp,
+//                            color = when (state) {
+//                                is ScanQrState.Detected -> Color.Yellow
+//                                is ScanQrState.BackendVerifying -> Color.Blue
+//                                is ScanQrState.ScanSuccess, is ScanQrState.NavigateToScannedProduct -> Color.Green
+//                                is ScanQrState.Error -> Color.Red
+//                                else -> MaterialTheme.colorScheme.primary
+//                            },
+//                            shape = MaterialTheme.shapes.medium
+//                        )
 //                )
 //
 //                // Dark edges gradient overlay
@@ -589,22 +647,78 @@ private fun ScanQRContent(
 //                            )
 //                        )
 //                )
+//
+//                // Loading indicator for backend verification
+//                if (state is ScanQrState.BackendVerifying) {
+//                    Box(
+//                        modifier = Modifier
+//                            .fillMaxSize()
+//                            .background(Color.Black.copy(alpha = 0.3f)),
+//                        contentAlignment = Alignment.Center
+//                    ) {
+//                        Card(
+//                            modifier = Modifier.padding(32.dp),
+//                            colors = CardDefaults.cardColors(
+//                                containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.9f)
+//                            )
+//                        ) {
+//                            Column(
+//                                modifier = Modifier.padding(24.dp),
+//                                horizontalAlignment = Alignment.CenterHorizontally
+//                            ) {
+//                                CircularProgressIndicator(
+//                                    modifier = Modifier.size(48.dp)
+//                                )
+//                                Spacer(modifier = Modifier.height(16.dp))
+//                                Text(
+//                                    text = "Checking product...",
+//                                    style = MaterialTheme.typography.bodyLarge
+//                                )
+//                            }
+//                        }
+//                    }
+//                }
 //            }
 //
+//            // Instructions text
+//            Card(
+//                modifier = Modifier
+//                    .fillMaxWidth()
+//                    .padding(horizontal = 16.dp, vertical = 8.dp),
+//                colors = CardDefaults.cardColors(
+//                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f)
+//                )
+//            ) {
+//                Text(
+//                    text = "Point your camera at a barcode or QR code to scan",
+//                    modifier = Modifier
+//                        .padding(16.dp)
+//                        .fillMaxWidth(),
+//                    style = MaterialTheme.typography.bodyMedium,
+//                    color = MaterialTheme.colorScheme.onSurfaceVariant
+//                )
+//            }
+//
+//            // Error retry button
 //            AnimatedVisibility(
 //                visible = state is ScanQrState.Error,
 //                enter = fadeIn() + slideInVertically(initialOffsetY = { it / 2 }),
 //                exit = fadeOut()
 //            ) {
-//                Text(
-//                    text = (state as? ScanQrState.Error)?.message ?: "",
-//                    color = MaterialTheme.colorScheme.error,
+//                Button(
+//                    onClick = {
+//                        vm.resetScan()
+//                        vm.startScan()
+//                    },
 //                    modifier = Modifier
-//                        .padding(12.dp)
-//                        .align(Alignment.CenterHorizontally)
-//                )
+//                        .padding(16.dp)
+//                        .fillMaxWidth()
+//                ) {
+//                    Text("Try Again")
+//                }
 //            }
 //        }
 //    }
 //}
+//
 //
