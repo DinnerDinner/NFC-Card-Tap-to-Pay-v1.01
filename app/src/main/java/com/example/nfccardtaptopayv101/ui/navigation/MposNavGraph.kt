@@ -14,17 +14,22 @@ import com.example.nfccardtaptopayv101.ui.screens.mpos.CheckoutScreen
 import com.example.nfccardtaptopayv101.ui.screens.mpos.EditDeleteProductScreen
 import com.example.nfccardtaptopayv101.ui.screens.mpos.ProductManagerScreen
 import com.example.nfccardtaptopayv101.ui.screens.mpos.ScanQRScreen
+import com.example.nfccardtaptopayv101.ui.screens.mpos.ScannedProductScreen // You'll need to create this
 import com.example.nfccardtaptopayv101.ui.screens.mpos.SalesPageScreen
 import com.example.nfccardtaptopayv101.ui.viewmodel.mpos.SalesPageViewModel
 import com.example.nfccardtaptopayv101.ui.viewmodel.mpos.ScanQrViewModel
+import com.example.nfccardtaptopayv101.ui.viewmodel.mpos.ScannedProductViewModel
 
 sealed class MposScreens(val route: String) {
     object ProductManager : MposScreens("product_manager")
     object AddProduct : MposScreens("add_product")
-    object EditDeleteProduct : MposScreens("edit_delete_product/{productId}") { fun createRoute(productId: Int) = "edit_delete_product/$productId"}
+    object EditDeleteProduct : MposScreens("edit_delete_product/{productId}") {
+        fun createRoute(productId: Int) = "edit_delete_product/$productId"
+    }
     object SalesPage : MposScreens("sales_page")
     object Checkout : MposScreens("checkout")
     object ScanQr : MposScreens("scan_qr")
+    object ScannedProduct : MposScreens("scanned_product")
 }
 
 @Composable
@@ -86,14 +91,51 @@ fun MposNavGraph(
             ScanQRScreen(
                 vm = scanQrViewModel,
                 onBack = { navController.popBackStack() },
-                onSuccessScan = { message ->
-                    // Pop back to SalesPage and the screen will handle the toast
-                    navController.popBackStack()
+                onNavigateToScannedProduct = {
+                    navController.navigate(MposScreens.ScannedProduct.route)
                 }
             )
         }
+
+        composable(MposScreens.ScannedProduct.route) {
+            // Get the scanned data from the scanQrViewModel
+            val scannedProduct = scanQrViewModel.scannedProduct
+            val scannedCode = scanQrViewModel.scannedCode
+
+            if (scannedProduct != null && scannedCode != null) {
+                // Create ScannedProductViewModel with the data
+                val scannedProductViewModel: ScannedProductViewModel = viewModel {
+                    ScannedProductViewModel(context.applicationContext, scannedProduct, scannedCode)
+                }
+
+                ScannedProductScreen(
+                    vm = scannedProductViewModel,
+                    onBack = {
+                        // Clear the scanned data when going back
+                        scanQrViewModel.clearScannedData()
+                        navController.popBackStack()
+                    },
+                    onConfirmProduct = { isCorrect ->
+                        if (isCorrect) {
+                            // Product confirmed - you can add the product to cart here
+                            // For now, navigate back to sales page
+                            scanQrViewModel.clearScannedData()
+                            navController.popBackStack(MposScreens.SalesPage.route, false)
+                        } else {
+                            // Product not correct - go back to scan again
+                            scanQrViewModel.clearScannedData()
+                            navController.popBackStack()
+                        }
+                    }
+                )
+            } else {
+                // If no data available, go back to scan screen
+                navController.popBackStack()
+            }
+        }
     }
 }
+
 
 
 
@@ -102,6 +144,7 @@ fun MposNavGraph(
 //import androidx.navigation.navArgument
 //
 //import androidx.compose.runtime.Composable
+//import androidx.compose.ui.platform.LocalContext
 //import androidx.lifecycle.viewmodel.compose.viewModel
 //import androidx.navigation.NavHostController
 //import androidx.navigation.compose.NavHost
@@ -114,15 +157,14 @@ fun MposNavGraph(
 //import com.example.nfccardtaptopayv101.ui.screens.mpos.ScanQRScreen
 //import com.example.nfccardtaptopayv101.ui.screens.mpos.SalesPageScreen
 //import com.example.nfccardtaptopayv101.ui.viewmodel.mpos.SalesPageViewModel
+//import com.example.nfccardtaptopayv101.ui.viewmodel.mpos.ScanQrViewModel
 //
 //sealed class MposScreens(val route: String) {
 //    object ProductManager : MposScreens("product_manager")
 //    object AddProduct : MposScreens("add_product")
-//    object EditDeleteProduct : MposScreens("edit_delete_product/{productId}") {
-//        fun createRoute(productId: Int) = "edit_delete_product/$productId"}
+//    object EditDeleteProduct : MposScreens("edit_delete_product/{productId}") { fun createRoute(productId: Int) = "edit_delete_product/$productId"}
 //    object SalesPage : MposScreens("sales_page")
 //    object Checkout : MposScreens("checkout")
-//
 //    object ScanQr : MposScreens("scan_qr")
 //}
 //
@@ -132,8 +174,12 @@ fun MposNavGraph(
 //    startDestination: String = MposScreens.ProductManager.route,
 //    onBackToDashboard: () -> Unit
 //) {
-//    // Instantiate ViewModel ONCE here, scoped to NavHost
+//    // Get context for ViewModels
+//    val context = LocalContext.current
+//
+//    // Instantiate ViewModels ONCE here, scoped to NavHost
 //    val salesPageViewModel: SalesPageViewModel = viewModel()
+//    val scanQrViewModel: ScanQrViewModel = viewModel { ScanQrViewModel(context.applicationContext) }
 //
 //    NavHost(
 //        navController = navController,
@@ -161,12 +207,11 @@ fun MposNavGraph(
 //        }
 //
 //        composable(MposScreens.SalesPage.route) {
-//            // Pass the SAME ViewModel instance here
 //            SalesPageScreen(
 //                vm = salesPageViewModel,
 //                onBack = onBackToDashboard,
 //                onCheckoutClicked = { navController.navigate(MposScreens.Checkout.route) },
-//                onScanClicked = { navController.navigate(MposScreens.ScanQr.route) }  // Navigate to Scan QR here
+//                onScanClicked = { navController.navigate(MposScreens.ScanQr.route) }
 //            )
 //        }
 //
@@ -179,17 +224,16 @@ fun MposNavGraph(
 //        }
 //
 //        composable(MposScreens.ScanQr.route) {
-//            // You can instantiate ScanQrViewModel here or let the screen do it
 //            ScanQRScreen(
+//                vm = scanQrViewModel,
 //                onBack = { navController.popBackStack() },
-//                onSuccessScan = { barcode ->
-//                    // For now, just pop back to SalesPage (or wherever you want)
-//                    // You can pass barcode as argument or handle next later
+//                onSuccessScan = { message ->
+//                    // Pop back to SalesPage and the screen will handle the toast
 //                    navController.popBackStack()
-//                    // TODO: Later navigate to ScanConfirmScreen with barcode
 //                }
 //            )
 //        }
-//
 //    }
 //}
+//
+//
