@@ -101,7 +101,7 @@ fun ScannedProductScreen(
                             )
                             Spacer(Modifier.height(16.dp))
                             Button(onClick = onBack) {
-                                Text("Go Back")
+                                Text("Go Back!")
                             }
                         }
                     }
