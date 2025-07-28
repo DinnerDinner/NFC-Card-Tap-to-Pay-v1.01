@@ -105,10 +105,6 @@ class ScanQrViewModel(private val appContext: Context) : ViewModel() {
         }
     }
 
-    fun clearAndReset() {
-        resetScan()
-        startScan()
-    }
 
     fun onBarcodeDetected(barcodeValue: String) {
         if (hasScanned.compareAndSet(false, true)) {
@@ -170,7 +166,38 @@ class ScanQrViewModel(private val appContext: Context) : ViewModel() {
             imageProxy.close()
         }
     }
+    fun resetForNavigation() {
+        // Cancel any ongoing jobs
+        debounceJob?.cancel()
+        debounceJob = null
 
+        // Reset all atomic and state variables
+        hasScanned.set(false)
+        _scannedProduct = null
+        _scannedCode = null
+
+        // Set to Idle state
+        _state.value = ScanQrState.Idle
+    }
+
+    fun startScanAfterReset() {
+        // Only start if we're in Idle state
+        if (_state.value == ScanQrState.Idle) {
+            _state.value = ScanQrState.Detecting
+            hasScanned.set(false)
+        }
+    }
+
+    // Update your existing clearAndReset method
+    fun clearAndReset() {
+        resetForNavigation()
+        // Don't immediately start scan here - let the UI handle it
+    }
+
+    // Method to check if we can start scanning
+    fun canStartScanning(): Boolean {
+        return _state.value == ScanQrState.Idle && !hasScanned.get()
+    }
     private fun verifyBarcodeWithBackend(
         barcode: String,
         onSuccess: (ProductData) -> Unit,

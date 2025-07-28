@@ -309,6 +309,7 @@ fun ProductDisplayContent(
                     Button(
                         onClick = {
                             vm.logProductInfo() // For debugging
+                            vm.clearState() // ADD THIS LINE - Clear this ViewModel's state
                             if (vm.confirmAndContinueScanning()) {
                                 onConfirmProduct(true) // This will navigate back to scan page
                             }

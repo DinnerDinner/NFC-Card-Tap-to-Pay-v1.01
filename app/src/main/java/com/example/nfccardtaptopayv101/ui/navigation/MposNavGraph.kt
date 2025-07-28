@@ -97,7 +97,16 @@ fun MposNavGraph(
             )
         }
 
+
+
+
+
         composable(MposScreens.ScanQr.route) {
+            // Reset ViewModel state when entering scan screen
+            LaunchedEffect(Unit) {
+                scanQrViewModel.resetForNavigation()
+            }
+
             ScanQRScreen(
                 vm = scanQrViewModel,
                 onBack = {
@@ -110,6 +119,7 @@ fun MposNavGraph(
             )
         }
 
+// Update your ScannedProduct composable in the NavGraph
         composable(MposScreens.ScannedProduct.route) {
             val scannedProduct = scanQrViewModel.scannedProduct
             val scannedCode = scanQrViewModel.scannedCode
@@ -132,11 +142,13 @@ fun MposNavGraph(
                     navController.popBackStack()
                 },
                 onConfirmProduct = { continueScanning ->
-                    scanQrViewModel.clearScannedData()
                     if (continueScanning) {
+                        // IMPORTANT: Reset the scan viewmodel before navigating back
+                        scanQrViewModel.resetForNavigation()
                         navController.popBackStack()
                     } else {
-                        // Navigate back to sales page - quantities will already be updated via repository
+                        // Navigate back to sales page
+                        scanQrViewModel.clearScannedData()
                         navController.navigate(MposScreens.SalesPage.route) {
                             popUpTo(MposScreens.SalesPage.route) { inclusive = true }
                             launchSingleTop = true
@@ -147,6 +159,56 @@ fun MposNavGraph(
         }
     }
 }
+//        composable(MposScreens.ScanQr.route) {
+//            ScanQRScreen(
+//                vm = scanQrViewModel,
+//                onBack = {
+//                    scanQrViewModel.clearScannedData()
+//                    navController.popBackStack()
+//                },
+//                onNavigateToScannedProduct = {
+//                    navController.navigate(MposScreens.ScannedProduct.route)
+//                }
+//            )
+//        }
+//
+//        composable(MposScreens.ScannedProduct.route) {
+//            val scannedProduct = scanQrViewModel.scannedProduct
+//            val scannedCode = scanQrViewModel.scannedCode
+//
+//            val scannedProductViewModel: ScannedProductViewModel? =
+//                remember(scannedProduct, scannedCode) {
+//                    if (scannedProduct != null && scannedCode != null) {
+//                        ScannedProductViewModel(
+//                            context.applicationContext,
+//                            scannedProduct,
+//                            scannedCode
+//                        )
+//                    } else null
+//                }
+//
+//            ScannedProductScreen(
+//                vm = scannedProductViewModel,
+//                onBack = {
+//                    scanQrViewModel.clearScannedData()
+//                    navController.popBackStack()
+//                },
+//                onConfirmProduct = { continueScanning ->
+//                    scanQrViewModel.clearScannedData()
+//                    if (continueScanning) {
+//                        navController.popBackStack()
+//                    } else {
+//                        // Navigate back to sales page - quantities will already be updated via repository
+//                        navController.navigate(MposScreens.SalesPage.route) {
+//                            popUpTo(MposScreens.SalesPage.route) { inclusive = true }
+//                            launchSingleTop = true
+//                        }
+//                    }
+//                }
+//            )
+//        }
+//    }
+//}
 
 
 //package com.example.nfccardtaptopayv101.ui.navigation
