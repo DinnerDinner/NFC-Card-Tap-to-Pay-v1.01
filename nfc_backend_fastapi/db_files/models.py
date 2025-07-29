@@ -36,12 +36,12 @@ class User(Base):
     is_cadet = Column(Boolean, default=False)
     is_hospital_user = Column(Boolean, default=False)
     is_student = Column(Boolean, default=False)
+    profile_picture_url = Column(String, nullable=True)
 
     # Relationships
     business = relationship("Business", back_populates="owner", uselist=False)
-    profile_picture_url = Column(String, nullable=True)
 
-    
+
     def __repr__(self):
         return f"<User {self.first_name} {self.last_name} | email={self.email}>"
 
