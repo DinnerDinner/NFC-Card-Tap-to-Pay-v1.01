@@ -1,5 +1,8 @@
 print("V2 Started!! WITH MPOS SYSTEM!!!")
-
+from datetime import datetime, time
+import asyncio
+from apscheduler.schedulers.background import BackgroundScheduler
+from apscheduler.triggers.cron import CronTrigger
 from fastapi import UploadFile, File
 # from cloudinary_utils import upload_image_to_cloudinary
 from typing import Annotated
@@ -612,3 +615,107 @@ def scan_product(payload: ProductScanRequest, db: Session = Depends(get_db)):
 
 print("V2 Achieved")
 
+
+
+
+
+class ProfilePictureStatusRequest(BaseModel):
+    user_id: int
+
+class ProfilePictureStatusResponse(BaseModel):
+    has_profile_picture: bool
+    image_url: str | None = None
+
+class UploadProfilePictureResponse(BaseModel):
+    image_url: str
+    user_id: str
+
+# Add this function for the midnight cleanup job
+def reset_all_profile_pictures():
+    """Reset all users' profile pictures to NULL at midnight"""
+    db = SessionLocal()
+    try:
+        # Update all users to set profile_picture_url to NULL
+        db.query(User).update({User.profile_picture_url: None})
+        db.commit()
+        print(f"✅ Profile pictures reset at {datetime.now()}")
+    except Exception as e:
+        print(f"❌ Error resetting profile pictures: {e}")
+        db.rollback()
+    finally:
+        db.close()
+
+# Add scheduler setup (put this after your app initialization)
+scheduler = BackgroundScheduler()
+scheduler.add_job(
+    func=reset_all_profile_pictures,
+    trigger=CronTrigger(hour=0, minute=0),  # Run at midnight every day
+    id='reset_profile_pictures',
+    name='Reset profile pictures at midnight',
+    replace_existing=True
+)
+scheduler.start()
+
+# Add these endpoints to your FastAPI app
+
+@app.get("/user/profile_picture_status")
+def get_profile_picture_status(user_id: int, db: Session = Depends(get_db)):
+    """Check if user has a valid profile picture"""
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    has_picture = user.profile_picture_url is not None and user.profile_picture_url.strip() != ""
+    
+    return ProfilePictureStatusResponse(
+        has_profile_picture=has_picture,
+        image_url=user.profile_picture_url if has_picture else None
+    )
+
+@app.post("/user/upload_profile_picture")
+def upload_profile_picture(
+    user_id: str = Form(...),
+    image: UploadFile = File(...),
+    db: Session = Depends(get_db)
+):
+    """Upload and save user's profile picture"""
+    try:
+        user_id_int = int(user_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid user_id format")
+    
+    # Check if user exists
+    user = db.query(User).filter(User.id == user_id_int).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Validate file type
+    if not image.content_type.startswith('image/'):
+        raise HTTPException(status_code=400, detail="File must be an image")
+    
+    try:
+        # Upload to Cloudinary
+        result = cloudinary.uploader.upload(
+            image.file,
+            folder="profile_pictures",
+            public_id=f"user_{user_id_int}_{int(datetime.now().timestamp())}"
+        )
+        
+        image_url = result.get("secure_url")
+        
+        # Save URL to database
+        user.profile_picture_url = image_url
+        db.commit()
+        db.refresh(user)
+        
+        return UploadProfilePictureResponse(
+            image_url=image_url,
+            user_id=user_id
+        )
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Upload failed: {str(e)}")
+
+from fastapi import Form
+
+print("Profile picture endpoints added!")
