@@ -655,8 +655,7 @@ class UploadProfilePictureResponse(BaseModel):
 #     replace_existing=True
 # )
 # scheduler.start()
-
-
+from fastapi import Form
 @app.get("/user/profile_picture_status")
 def get_profile_picture_status(user_id: int, db: Session = Depends(get_db)):
     """Check if user has a valid profile picture"""
@@ -715,6 +714,5 @@ def upload_profile_picture(
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Upload failed: {str(e)}")
 
-from fastapi import Form
 
 print("Profile picture endpoints added!")
