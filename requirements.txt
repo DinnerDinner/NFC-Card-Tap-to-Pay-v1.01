@@ -6,3 +6,4 @@ cloudinary
 python-multipart
 pydantic
 email-validator
+python-multipart

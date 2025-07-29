@@ -1,6 +1,7 @@
-@file:OptIn(ExperimentalMaterial3Api::class)
 
 package com.example.nfccardtaptopayv101.ui.screens
+import com.example.nfccardtaptopayv101.ui.navigation.ScreensNavGraph
+import org.json.JSONObject
 
 import android.content.Context
 import android.content.Intent
@@ -18,16 +19,19 @@ import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 
 
-// --- Logic + State Holder ---
 @Composable
 fun LoggedInHomeScreen(
-    userData: String,
+    userData: String,  // This should contain user_id
     startOnProfile: Boolean = false
 ) {
     var selectedScreen by remember { mutableStateOf(if (startOnProfile) "Profile" else "Profile") }
     val drawerState = rememberDrawerState(DrawerValue.Closed)
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
+
+    // Extract user_id from userData (adjust based on your userData format)
+    val userId = extractUserIdFromUserData(userData)
+
     // Function to handle logout
     fun logout() {
         context.getSharedPreferences("user_prefs", Context.MODE_PRIVATE)
@@ -41,6 +45,7 @@ fun LoggedInHomeScreen(
     LoggedInHomeScreenUI(
         drawerState = drawerState,
         selectedScreen = selectedScreen,
+        userId = userId,  // Pass userId to UI
         onScreenSelected = { screen ->
             selectedScreen = screen
             scope.launch { drawerState.close() }
@@ -49,11 +54,12 @@ fun LoggedInHomeScreen(
     )
 }
 
-// --- Pure UI / Design only, no logic ---
+// 3. UPDATE the LoggedInHomeScreenUI function signature:
 @Composable
 fun LoggedInHomeScreenUI(
     drawerState: DrawerState,
     selectedScreen: String,
+    userId: String,  // Add userId parameter
     onScreenSelected: (String) -> Unit,
     onLogout: () -> Unit
 ) {
@@ -62,13 +68,12 @@ fun LoggedInHomeScreenUI(
     val menuItems = listOf(
         "Profile" to Icons.Default.AccountCircle,
         "Tap to Transfer Machine" to Icons.Default.PointOfSale,
-        "Emulated Cards' Wallet" to Icons.Default.CreditCard,
+        "Emulated Cards' Wallet" to Icons.Default.CreditCard,  // This is our payment screens
         "mPOS System" to Icons.Default.List
     )
 
-
     val docUrl = "https://docs.google.com/document/d/1QQD2LfHxB9PL7WVrrD_x2Aro4eLrwzwWUdVPxt8dofc/edit?usp=sharing"
-
+    @OptIn(ExperimentalMaterial3Api::class)
     ModalNavigationDrawer(
         drawerState = drawerState,
         drawerContent = {
@@ -132,14 +137,33 @@ fun LoggedInHomeScreenUI(
                 when (selectedScreen) {
                     "Profile" -> ProfileScreen()
                     "Tap to Transfer Machine" -> LaunchTransferActivity()
-                    "Emulated Cards' Wallet" -> CardsScreen()
+                    "Emulated Cards' Wallet" -> CardsScreen(userId = userId)  // Pass userId here
                     "mPOS System" -> BusinessUnifiedScreen()
-
                 }
             }
         }
     }
 }
+
+// 4. UPDATE the CardsScreen function:
+@Composable
+fun CardsScreen(userId: String) {
+    ScreensNavGraph(userId = userId)
+}
+
+// 5. ADD this helper function to extract user ID:
+fun extractUserIdFromUserData(userData: String): String {
+    // Adjust this based on how your userData is structured
+    // If userData is JSON, parse it:
+    return try {
+        val json = JSONObject(userData)
+        json.getString("user_id")
+    } catch (e: Exception) {
+        // If userData is just the user_id as string:
+        userData
+    }
+}
+
 
 @Composable
 fun LaunchTransferActivity() {
