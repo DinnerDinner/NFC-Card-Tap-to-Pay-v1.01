@@ -1,8 +1,8 @@
 print("V2 Started!! WITH MPOS SYSTEM!!!")
 from datetime import datetime, time
 import asyncio
-from apscheduler.schedulers.background import BackgroundScheduler
-from apscheduler.triggers.cron import CronTrigger
+# from apscheduler.schedulers.background import BackgroundScheduler
+# from apscheduler.triggers.cron import CronTrigger
 from fastapi import UploadFile, File
 # from cloudinary_utils import upload_image_to_cloudinary
 from typing import Annotated
@@ -631,32 +631,31 @@ class UploadProfilePictureResponse(BaseModel):
     user_id: str
 
 # Add this function for the midnight cleanup job
-def reset_all_profile_pictures():
-    """Reset all users' profile pictures to NULL at midnight"""
-    db = SessionLocal()
-    try:
-        # Update all users to set profile_picture_url to NULL
-        db.query(User).update({User.profile_picture_url: None})
-        db.commit()
-        print(f"✅ Profile pictures reset at {datetime.now()}")
-    except Exception as e:
-        print(f"❌ Error resetting profile pictures: {e}")
-        db.rollback()
-    finally:
-        db.close()
+# def reset_all_profile_pictures():
+#     """Reset all users' profile pictures to NULL at midnight"""
+#     db = SessionLocal()
+#     try:
+#         # Update all users to set profile_picture_url to NULL
+#         db.query(User).update({User.profile_picture_url: None})
+#         db.commit()
+#         print(f"✅ Profile pictures reset at {datetime.now()}")
+#     except Exception as e:
+#         print(f"❌ Error resetting profile pictures: {e}")
+#         db.rollback()
+#     finally:
+#         db.close()
 
-# Add scheduler setup (put this after your app initialization)
-scheduler = BackgroundScheduler()
-scheduler.add_job(
-    func=reset_all_profile_pictures,
-    trigger=CronTrigger(hour=0, minute=0),  # Run at midnight every day
-    id='reset_profile_pictures',
-    name='Reset profile pictures at midnight',
-    replace_existing=True
-)
-scheduler.start()
+# # Add scheduler setup (put this after your app initialization)
+# scheduler = BackgroundScheduler()
+# scheduler.add_job(
+#     func=reset_all_profile_pictures,
+#     trigger=CronTrigger(hour=0, minute=0),  # Run at midnight every day
+#     id='reset_profile_pictures',
+#     name='Reset profile pictures at midnight',
+#     replace_existing=True
+# )
+# scheduler.start()
 
-# Add these endpoints to your FastAPI app
 
 @app.get("/user/profile_picture_status")
 def get_profile_picture_status(user_id: int, db: Session = Depends(get_db)):
