@@ -39,7 +39,9 @@ class User(Base):
 
     # Relationships
     business = relationship("Business", back_populates="owner", uselist=False)
+    profile_picture_url = Column(String, nullable=True)
 
+    
     def __repr__(self):
         return f"<User {self.first_name} {self.last_name} | email={self.email}>"
 
