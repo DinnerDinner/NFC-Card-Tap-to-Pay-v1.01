@@ -1,8 +1,8 @@
 package com.example.nfccardtaptopayv101.ui.screens.ble
 
-import android.app.Activity
-import android.content.Intent
-import android.provider.MediaStore
+import android.Manifest
+import android.content.pm.PackageManager
+import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
@@ -18,6 +18,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
@@ -36,9 +37,18 @@ fun Screen0Screen(
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
 
-    // Check profile picture status on launch
-    LaunchedEffect(Unit) {
-        viewModel.checkProfilePictureStatus()
+    // State for handling camera
+    var photoFile by remember { mutableStateOf<File?>(null) }
+    var photoUri by remember { mutableStateOf<Uri?>(null) }
+
+    // Check camera permission on composition
+    var hasCameraPermission by remember {
+        mutableStateOf(
+            ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.CAMERA
+            ) == PackageManager.PERMISSION_GRANTED
+        )
     }
 
     // Handle navigation
@@ -49,41 +59,60 @@ fun Screen0Screen(
         }
     }
 
-    // Camera launcher
-    var photoFile by remember { mutableStateOf<File?>(null) }
+    // Camera launcher using TakePicture contract
     val cameraLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.StartActivityForResult()
-    ) { result ->
-        if (result.resultCode == Activity.RESULT_OK) {
-            photoFile?.let { file ->
-                if (file.exists()) {
-                    viewModel.uploadProfilePicture(file)
-                }
-            }
+        contract = ActivityResultContracts.TakePicture()
+    ) { success ->
+        if (success && photoFile != null && photoFile!!.exists()) {
+            viewModel.uploadProfilePicture(photoFile!!)
         }
     }
 
+    // Define launchCamera function after cameraLauncher is declared
     fun launchCamera() {
-        val timeStamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
-        val imageFileName = "JPEG_${timeStamp}_"
-        val storageDir = context.getExternalFilesDir(android.os.Environment.DIRECTORY_PICTURES)
-
         try {
+            val timeStamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
+            val imageFileName = "profile_${timeStamp}_"
+            val storageDir = context.getExternalFilesDir(android.os.Environment.DIRECTORY_PICTURES)
+
+            // Ensure directory exists
+            if (storageDir != null && !storageDir.exists()) {
+                storageDir.mkdirs()
+            }
+
             val file = File.createTempFile(imageFileName, ".jpg", storageDir)
             photoFile = file
 
-            val photoUri = FileProvider.getUriForFile(
+            val uri = FileProvider.getUriForFile(
                 context,
                 "${context.packageName}.provider",
                 file
             )
+            photoUri = uri
 
-            val intent = Intent(MediaStore.ACTION_IMAGE_CAPTURE).apply {
-                putExtra(MediaStore.EXTRA_OUTPUT, photoUri)
-            }
-            cameraLauncher.launch(intent)
+            cameraLauncher.launch(uri)
         } catch (e: Exception) {
-            // Handle error silently for now
+            e.printStackTrace()
+            // Handle error gracefully - you might want to show a snackbar or error message
+        }
+    }
+
+    // Permission launcher
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        hasCameraPermission = isGranted
+        if (isGranted) {
+            launchCamera()
+        }
+    }
+
+    // Define handleCameraClick function after permissionLauncher is declared
+    fun handleCameraClick() {
+        if (hasCameraPermission) {
+            launchCamera()
+        } else {
+            permissionLauncher.launch(Manifest.permission.CAMERA)
         }
     }
 
@@ -120,12 +149,12 @@ fun Screen0Screen(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
-                // Profile Picture Placeholder
+                // Profile Picture Placeholder - Made bigger
                 Card(
                     modifier = Modifier
-                        .size(200.dp)
+                        .size(320.dp)
                         .clip(CircleShape),
-                    onClick = { launchCamera() }
+                    onClick = { handleCameraClick() }
                 ) {
                     Box(
                         modifier = Modifier.fillMaxSize(),
@@ -135,14 +164,24 @@ fun Screen0Screen(
                             modifier = Modifier.fillMaxSize(),
                             color = MaterialTheme.colorScheme.surfaceVariant
                         ) {
-                            Icon(
-                                imageVector = Icons.Default.CameraAlt,
-                                contentDescription = "Take Photo",
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .padding(60.dp),
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
+                            // Show captured image if available, otherwise show camera icon
+                            if (photoUri != null && photoFile?.exists() == true) {
+                                AsyncImage(
+                                    model = photoUri,
+                                    contentDescription = "Captured Photo",
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentScale = ContentScale.Crop
+                                )
+                            } else {
+                                Icon(
+                                    imageVector = Icons.Default.CameraAlt,
+                                    contentDescription = "Take Photo",
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .padding(100.dp),
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
                         }
                     }
                 }
@@ -167,7 +206,7 @@ fun Screen0Screen(
 
                 // Red Capture Button
                 ExtendedFloatingActionButton(
-                    onClick = { launchCamera() },
+                    onClick = { handleCameraClick() },
                     modifier = Modifier.fillMaxWidth(),
                     containerColor = Color.Red,
                     contentColor = Color.White
@@ -177,7 +216,7 @@ fun Screen0Screen(
                         contentDescription = "Camera"
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Take Photo")
+                    Text(if (photoFile?.exists() == true) "Retake Photo" else "Take Photo")
                 }
             }
         }
@@ -193,6 +232,23 @@ fun Screen0Screen(
                     CircularProgressIndicator()
                     Spacer(modifier = Modifier.height(16.dp))
                     Text("Uploading profile picture...")
+
+                    // Show the captured image while uploading
+                    if (photoUri != null) {
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Card(
+                            modifier = Modifier
+                                .size(150.dp)
+                                .clip(CircleShape)
+                        ) {
+                            AsyncImage(
+                                model = photoUri,
+                                contentDescription = "Uploading Photo",
+                                modifier = Modifier.fillMaxSize(),
+                                contentScale = ContentScale.Crop
+                            )
+                        }
+                    }
                 }
             }
         }
@@ -208,6 +264,7 @@ fun Screen0Screen(
         }
 
         is ProfileGatekeeperUiState.Error -> {
+            val errorState = uiState as ProfileGatekeeperUiState.Error
             Box(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center
@@ -216,9 +273,9 @@ fun Screen0Screen(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
-                        text = "Error",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.error
+                        text = "Error: ${errorState.msg}",
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodyMedium
                     )
                     Spacer(modifier = Modifier.height(16.dp))
                     Button(
