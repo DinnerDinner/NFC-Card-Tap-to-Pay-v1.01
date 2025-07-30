@@ -85,7 +85,7 @@ class TaptoTransferMachine : ComponentActivity() {
         val json = JSONObject().apply {
             put("uid", cardUid)
             put("merchant_id", merchantId)
-            put("amount", amountToCharge)
+            put("amount", amountToCharge.toDouble())  // Double - works!
         }
 
         lifecycleScope.launch(Dispatchers.IO) {
