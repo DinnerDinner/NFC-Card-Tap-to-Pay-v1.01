@@ -273,7 +273,7 @@ fun Screen0Screen(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
-                        text = "Error: ${errorState.msg}",
+                        text = "Error: ${errorState.msg}!!",
                         color = MaterialTheme.colorScheme.error,
                         style = MaterialTheme.typography.bodyMedium
                     )
