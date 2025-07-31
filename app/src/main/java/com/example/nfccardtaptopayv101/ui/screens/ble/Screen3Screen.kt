@@ -33,24 +33,45 @@ fun Screen3Screen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
 
-    // Permission launcher
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestMultiplePermissions()
     ) { permissions ->
         viewModel.refreshPermissionsAndBluetooth()
-
-        // If permissions granted, try to start advertising
         if (permissions.values.all { it }) {
             viewModel.startAdvertising()
         }
     }
 
-    // Set userId when screen loads
-    LaunchedEffect(uiState.userId) {
-        // userId is already set by NavGraph, no need to set it again
+    // Handle side effects like permission requests and starting advertising
+    LaunchedEffect(
+        uiState.hasRequiredPermissions,
+        uiState.isBluetoothEnabled,
+        uiState.isLoadingUserData,
+        uiState.advertisingState
+    ) {
+        when {
+            uiState.isLoadingUserData -> {
+                // Wait until user data loaded before starting
+            }
+            !uiState.hasRequiredPermissions -> {
+                permissionLauncher.launch(viewModel.getRequiredPermissions())
+            }
+            !uiState.isBluetoothEnabled -> {
+                // Could prompt user to enable Bluetooth here
+            }
+            uiState.advertisingState is BleAdvertisingState.Idle -> {
+                viewModel.startAdvertising()
+            }
+        }
     }
 
-    // Show loading if user data is still being fetched
+    DisposableEffect(Unit) {
+        onDispose {
+            viewModel.stopAdvertising()
+        }
+    }
+
+    // Show loading spinner while fetching user data
     if (uiState.isLoadingUserData) {
         Box(
             modifier = Modifier.fillMaxSize(),
@@ -58,184 +79,143 @@ fun Screen3Screen(
         ) {
             CircularProgressIndicator()
         }
-        // Handle advertising lifecycle
-        LaunchedEffect(
-            uiState.hasRequiredPermissions,
-            uiState.isBluetoothEnabled,
-            uiState.isLoadingUserData
+        return
+    }
+
+    // Main UI when data is loaded
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = {
+                    Text(
+                        "Send Money",
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+            )
+        }
+    ) { paddingValues ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .padding(24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
         ) {
-            when {
-                uiState.isLoadingUserData -> {
-                    // Wait for user data to load before starting advertising
-                }
-
-                !uiState.hasRequiredPermissions -> {
-                    // Request permissions
-                    permissionLauncher.launch(viewModel.getRequiredPermissions())
-                }
-
-                !uiState.isBluetoothEnabled -> {
-                    // Bluetooth is disabled - user needs to enable it manually
-                    // Could show a dialog here to prompt user to enable Bluetooth
-                }
-
-                uiState.advertisingState is BleAdvertisingState.Idle -> {
-                    // Ready to start advertising
-                    viewModel.startAdvertising()
-                }
-            }
-        }
-
-        // Stop advertising when leaving screen
-        DisposableEffect(Unit) {
-            onDispose {
-                viewModel.stopAdvertising()
-            }
-        }
-
-        // UI Layout
-        Scaffold(
-            topBar = {
-                TopAppBar(
-                    title = {
-                        Text(
-                            "Send Money",
-                            fontSize = 20.sp,
-                            fontWeight = FontWeight.Medium
-                        )
-                    }
-                )
-            }
-        ) { paddingValues ->
-            Column(
+            // Profile picture
+            Box(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues)
-                    .padding(24.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
+                    .size(160.dp)
+                    .clip(CircleShape),
+                contentAlignment = Alignment.Center
             ) {
-
-                // Profile Picture - Large Circle
-                Box(
-                    modifier = Modifier
-                        .size(160.dp)
-                        .clip(CircleShape),
-                    contentAlignment = Alignment.Center
-                ) {
-                    if (!uiState.userProfileImageUrl.isNullOrEmpty()) {
-                        AsyncImage(
-                            model = ImageRequest.Builder(context)
-                                .data(uiState.userProfileImageUrl)
-                                .crossfade(true)
-                                .build(),
-                            contentDescription = "Profile Picture",
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .clip(CircleShape),
-                            contentScale = ContentScale.Crop
+                if (!uiState.userProfileImageUrl.isNullOrEmpty()) {
+                    AsyncImage(
+                        model = ImageRequest.Builder(context)
+                            .data(uiState.userProfileImageUrl)
+                            .crossfade(true)
+                            .build(),
+                        contentDescription = "Profile Picture",
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .clip(CircleShape),
+                        contentScale = ContentScale.Crop
+                    )
+                } else {
+                    Card(
+                        modifier = Modifier.fillMaxSize(),
+                        shape = CircleShape,
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceVariant
                         )
-                    } else {
-                        // Fallback placeholder
-                        Card(
+                    ) {
+                        Box(
                             modifier = Modifier.fillMaxSize(),
-                            shape = CircleShape,
-                            colors = CardDefaults.cardColors(
-                                containerColor = MaterialTheme.colorScheme.surfaceVariant
-                            )
+                            contentAlignment = Alignment.Center
                         ) {
-                            Box(
-                                modifier = Modifier.fillMaxSize(),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Text(
-                                    text = "📷",
-                                    style = MaterialTheme.typography.displayLarge,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
-                        }
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(24.dp))
-
-                // User Name
-                Text(
-                    text = uiState.userName.ifEmpty { "User" },
-                    fontSize = 24.sp,
-                    fontWeight = FontWeight.Medium,
-                    textAlign = TextAlign.Center,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // Status Message
-                Text(
-                    text = uiState.statusMessage,
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold,
-                    textAlign = TextAlign.Center,
-                    color = when (uiState.advertisingState) {
-                        is BleAdvertisingState.Broadcasting -> Color(0xFF4CAF50) // Green
-                        is BleAdvertisingState.Error -> Color(0xFFE57373) // Red
-                        is BleAdvertisingState.Starting -> Color(0xFFFF9800) // Orange
-                        else -> MaterialTheme.colorScheme.onSurface
-                    }
-                )
-
-                Spacer(modifier = Modifier.height(32.dp))
-
-                // Status Indicator (optional visual feedback)
-                when (uiState.advertisingState) {
-                    is BleAdvertisingState.Broadcasting -> {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.Center
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .size(12.dp)
-                                    .clip(CircleShape)
-                            ) {
-                                Card(
-                                    modifier = Modifier.fillMaxSize(),
-                                    colors = CardDefaults.cardColors(
-                                        containerColor = Color(0xFF4CAF50)
-                                    )
-                                ) {}
-                            }
-                            Spacer(modifier = Modifier.width(8.dp))
                             Text(
-                                text = "Broadcasting Active",
-                                fontSize = 14.sp,
-                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                                text = "📷",
+                                style = MaterialTheme.typography.displayLarge,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
                     }
+                }
+            }
 
-                    is BleAdvertisingState.Error -> {
-                        val errorState = uiState.advertisingState as BleAdvertisingState.Error
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // User Name
+            Text(
+                text = uiState.userName.ifEmpty { "User" },
+                fontSize = 24.sp,
+                fontWeight = FontWeight.Medium,
+                textAlign = TextAlign.Center,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Status Message
+            Text(
+                text = uiState.statusMessage,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center,
+                color = when (uiState.advertisingState) {
+                    is BleAdvertisingState.Broadcasting -> Color(0xFF4CAF50)
+                    is BleAdvertisingState.Error -> Color(0xFFE57373)
+                    is BleAdvertisingState.Starting -> Color(0xFFFF9800)
+                    else -> MaterialTheme.colorScheme.onSurface
+                }
+            )
+
+            Spacer(modifier = Modifier.height(32.dp))
+
+            when (uiState.advertisingState) {
+                is BleAdvertisingState.Broadcasting -> {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(12.dp)
+                                .clip(CircleShape)
+                        ) {
+                            Card(
+                                modifier = Modifier.fillMaxSize(),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = Color(0xFF4CAF50)
+                                )
+                            ) {}
+                        }
+                        Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "⚠️ ${errorState}",
+                            text = "Broadcasting Active",
                             fontSize = 14.sp,
-                            color = Color(0xFFE57373),
-                            textAlign = TextAlign.Center
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                         )
-                    }
-
-                    is BleAdvertisingState.Starting -> {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(24.dp),
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                    }
-
-                    else -> {
-                        // Idle or Stopped - show nothing or a subtle indicator
                     }
                 }
+                is BleAdvertisingState.Error -> {
+                    val errorState = uiState.advertisingState as BleAdvertisingState.Error
+                    Text(
+                        text = "⚠️ ${errorState.message}",
+                        fontSize = 14.sp,
+                        color = Color(0xFFE57373),
+                        textAlign = TextAlign.Center
+                    )
+                }
+                is BleAdvertisingState.Starting -> {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(24.dp),
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+                else -> { /* Idle or Stopped - no indicator */ }
             }
         }
     }
