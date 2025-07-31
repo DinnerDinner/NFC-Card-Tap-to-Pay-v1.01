@@ -415,7 +415,7 @@ class Screen3ViewModel(app: Application) : AndroidViewModel(app) {
 
     override fun onCleared() {
         super.onCleared()
-        Log.d(TAG, "ViewModel cleared, stopping advertising")
+        Log.d(TAG, "ViewModel cleared, stopping advertising!")
         stopAdvertising()
     }
 }
