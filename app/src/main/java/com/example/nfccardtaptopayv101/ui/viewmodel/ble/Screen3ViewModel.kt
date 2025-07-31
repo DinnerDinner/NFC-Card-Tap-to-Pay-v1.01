@@ -55,7 +55,7 @@ class Screen3ViewModel(app: Application) : AndroidViewModel(app) {
     companion object {
         private const val TAG = "Screen3ViewModel"
         // Use your own custom company ID for manufacturer data (avoid using Apple's 0x004C)
-        private const val CUSTOM_COMPANY_ID = 0x1234 // Replace with your registered company ID
+        private const val CUSTOM_COMPANY_ID = 0x1269 // Replace with your registered company ID
     }
 
     private val context = getApplication<Application>()
