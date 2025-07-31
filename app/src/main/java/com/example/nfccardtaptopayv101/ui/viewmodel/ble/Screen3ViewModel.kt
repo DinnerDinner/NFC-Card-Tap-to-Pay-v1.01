@@ -28,6 +28,7 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONObject
 import java.io.IOException
 import java.util.UUID
+
 private const val BASE_URL = "https://nfc-fastapi-backend.onrender.com"
 
 sealed class BleAdvertisingState {
@@ -47,24 +48,22 @@ data class Screen3UiState(
     val userName: String = "",
     val userProfileImageUrl: String = "",
     val isLoadingUserData: Boolean = false
-
 )
 
 class Screen3ViewModel(app: Application) : AndroidViewModel(app) {
 
     companion object {
         private const val TAG = "Screen3ViewModel"
-        // Custom service UUID for your payment app - merchants will scan for this
-        private val SERVICE_UUID = UUID.fromString("12345678-1234-5678-9abc-123456789012")
+        // Use your own custom company ID for manufacturer data (avoid using Apple's 0x004C)
+        private const val CUSTOM_COMPANY_ID = 0x1234 // Replace with your registered company ID
     }
-
 
     private val context = getApplication<Application>()
     private val bluetoothManager = context.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
     private val bluetoothAdapter: BluetoothAdapter? = bluetoothManager.adapter
     private var bluetoothLeAdvertiser: BluetoothLeAdvertiser? = null
 
-    // HTTP client for API calls (same config as Screen0ViewModel)
+    // HTTP client for API calls
     private val client = OkHttpClient.Builder()
         .connectTimeout(10, java.util.concurrent.TimeUnit.SECONDS)
         .readTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
@@ -279,7 +278,11 @@ class Screen3ViewModel(app: Application) : AndroidViewModel(app) {
                 .setTimeout(0) // Advertise indefinitely
                 .build()
 
+            // Use the compact version to avoid "data too large" error
             val data = createAdvertiseData(_uiState.value.userId)
+
+            // Debug the size
+            debugAdvertiseDataSize(data)
 
             Log.d(TAG, "Starting BLE advertising for userId: ${_uiState.value.userId}")
             bluetoothLeAdvertiser?.startAdvertising(settings, data, advertiseCallback)
@@ -316,26 +319,54 @@ class Screen3ViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
+    // Compact advertisement data using manufacturer data (most space-efficient)
     private fun createAdvertiseData(userId: String): AdvertiseData {
-        // Convert userId to bytes for transmission
-        // For now, we'll send the userId as UTF-8 bytes
-        // TODO: Implement proper hashing later as mentioned
-        val userIdBytes = userId.toByteArray(Charsets.UTF_8)
+        val idInt = userId.toIntOrNull() ?: 0
 
-        // Ensure we don't exceed BLE advertising data limits (max ~20 bytes for service data)
-        val serviceData = if (userIdBytes.size <= 20) {
-            userIdBytes
-        } else {
-            // If userId is too long, take first 20 bytes
-            userIdBytes.copyOf(20)
+        // Use only 2 bytes for user ID (supports IDs 0-65535)
+        val userIdBytes = ByteArray(2).apply {
+            this[0] = (idInt shr 8).toByte()
+            this[1] = idInt.toByte()
         }
 
         return AdvertiseData.Builder()
             .setIncludeDeviceName(false)
             .setIncludeTxPowerLevel(false)
-            .addServiceUuid(ParcelUuid(SERVICE_UUID))
-            .addServiceData(ParcelUuid(SERVICE_UUID), serviceData)
+            // Using manufacturer data - most space efficient approach
+            .addManufacturerData(CUSTOM_COMPANY_ID, userIdBytes)
             .build()
+    }
+
+    // Debug function to estimate advertisement size
+    private fun debugAdvertiseDataSize(data: AdvertiseData): Int {
+        var size = 0
+
+        // Flags: 3 bytes (always present)
+        size += 3
+
+        // Manufacturer Data
+        data.manufacturerSpecificData?.let { sparseArray ->
+            for (i in 0 until sparseArray.size()) {
+                size += 2 // Company ID (2 bytes)
+                size += 1 // Length field
+                size += 1 // Type field
+                size += sparseArray.valueAt(i).size // Actual data
+            }
+        }
+
+        // Service UUIDs (if any)
+        data.serviceUuids?.forEach { uuid ->
+            size += if (uuid.uuid.toString().length > 8) 18 else 4 // 128-bit vs 16-bit UUID
+        }
+
+        // Service Data (if any)
+        data.serviceData?.forEach { (uuid, bytes) ->
+            size += if (uuid.uuid.toString().length > 8) 18 else 4 // UUID size
+            size += bytes.size // Data size
+        }
+
+        Log.d(TAG, "Estimated advertisement size: $size bytes (limit: 31 bytes)")
+        return size
     }
 
     private fun checkPermissionsAndBluetooth() {
