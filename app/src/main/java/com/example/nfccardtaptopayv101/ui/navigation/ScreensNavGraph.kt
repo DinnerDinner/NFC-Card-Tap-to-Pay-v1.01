@@ -14,9 +14,11 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.nfccardtaptopayv101.ui.screens.ble.Screen0Screen
 import com.example.nfccardtaptopayv101.ui.screens.ble.Screen1Screen
+import com.example.nfccardtaptopayv101.ui.screens.ble.Screen2Screen
 import com.example.nfccardtaptopayv101.ui.screens.ble.Screen3Screen
 import com.example.nfccardtaptopayv101.ui.viewmodel.ble.Screen0ViewModel
 import com.example.nfccardtaptopayv101.ui.viewmodel.ble.Screen1ViewModel
+import com.example.nfccardtaptopayv101.ui.viewmodel.ble.Screen2ViewModel
 import com.example.nfccardtaptopayv101.ui.viewmodel.ble.Screen3ViewModel
 
 sealed class PaymentScreen(val route: String) {
@@ -24,6 +26,7 @@ sealed class PaymentScreen(val route: String) {
     object ModeSelection : PaymentScreen("mode_selection")
     object RequestMoney : PaymentScreen("request_money")
     object SendMoney : PaymentScreen("send_money")
+    object TransactionDetails : PaymentScreen("transaction_details/{userId}/{userName}")
 }
 
 @Composable
@@ -82,12 +85,19 @@ fun ScreensNavGraph(
         }
 
         composable(PaymentScreen.RequestMoney.route) {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                Text("Request Money Screen - Coming Soon")
-            }
+            val viewModel: Screen2ViewModel = viewModel()
+
+            Screen2Screen(
+                viewModel = viewModel,
+                onUserSelected = { selectedUser ->
+                    // Navigate to transaction details screen with selected user info
+                    navController.navigate(
+                        PaymentScreen.TransactionDetails.route
+                            .replace("{userId}", selectedUser.userId)
+                            .replace("{userName}", selectedUser.userName.ifEmpty { "User ${selectedUser.userId}" })
+                    )
+                }
+            )
         }
 
         composable(PaymentScreen.SendMoney.route) {
@@ -104,8 +114,25 @@ fun ScreensNavGraph(
                 viewModel = viewModel
             )
         }
+
+        composable(PaymentScreen.TransactionDetails.route) { backStackEntry ->
+            val selectedUserId = backStackEntry.arguments?.getString("userId") ?: ""
+            val selectedUserName = backStackEntry.arguments?.getString("userName") ?: ""
+
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                Text("Transaction Details Screen - Coming Soon\nSelected User: $selectedUserName (ID: $selectedUserId)")
+            }
+        }
     }
 }
+
+
+
+
+
 
 
 //package com.example.nfccardtaptopayv101.ui.navigation
@@ -117,7 +144,6 @@ fun ScreensNavGraph(
 //import androidx.compose.runtime.LaunchedEffect
 //import androidx.compose.ui.Alignment
 //import androidx.compose.ui.Modifier
-//import androidx.compose.ui.platform.LocalContext
 //import androidx.lifecycle.viewmodel.compose.viewModel
 //import androidx.navigation.NavHostController
 //import androidx.navigation.compose.NavHost
@@ -125,8 +151,10 @@ fun ScreensNavGraph(
 //import androidx.navigation.compose.rememberNavController
 //import com.example.nfccardtaptopayv101.ui.screens.ble.Screen0Screen
 //import com.example.nfccardtaptopayv101.ui.screens.ble.Screen1Screen
+//import com.example.nfccardtaptopayv101.ui.screens.ble.Screen3Screen
 //import com.example.nfccardtaptopayv101.ui.viewmodel.ble.Screen0ViewModel
 //import com.example.nfccardtaptopayv101.ui.viewmodel.ble.Screen1ViewModel
+//import com.example.nfccardtaptopayv101.ui.viewmodel.ble.Screen3ViewModel
 //
 //sealed class PaymentScreen(val route: String) {
 //    object ProfileGatekeeper : PaymentScreen("profile_gatekeeper")
@@ -200,12 +228,18 @@ fun ScreensNavGraph(
 //        }
 //
 //        composable(PaymentScreen.SendMoney.route) {
-//            Box(
-//                modifier = Modifier.fillMaxSize(),
-//                contentAlignment = Alignment.Center
-//            ) {
-//                Text("Send Money Screen - Coming Soon")
+//            val viewModel: Screen3ViewModel = viewModel()
+//
+//            // Set userId - ViewModel will handle fetching user data
+//            LaunchedEffect(userId) {
+//                if (userId.isNotEmpty()) {
+//                    viewModel.setUserId(userId)
+//                }
 //            }
+//
+//            Screen3Screen(
+//                viewModel = viewModel
+//            )
 //        }
 //    }
 //}
