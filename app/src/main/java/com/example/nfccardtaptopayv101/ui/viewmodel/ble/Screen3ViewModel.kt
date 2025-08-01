@@ -365,7 +365,7 @@ class Screen3ViewModel(app: Application) : AndroidViewModel(app) {
             size += bytes.size // Data size
         }
 
-        Log.d(TAG, "Estimated advertisement size: $size bytes (limit: 31 bytes)")
+        Log.d(TAG, "!Estimated advertisement size: $size bytes (limit: 31 bytes)")
         return size
     }
 
