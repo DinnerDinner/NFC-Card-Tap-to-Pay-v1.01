@@ -16,16 +16,21 @@ import com.example.nfccardtaptopayv101.ui.screens.ble.Screen0Screen
 import com.example.nfccardtaptopayv101.ui.screens.ble.Screen1Screen
 import com.example.nfccardtaptopayv101.ui.screens.ble.Screen2Screen
 import com.example.nfccardtaptopayv101.ui.screens.ble.Screen3Screen
+import com.example.nfccardtaptopayv101.ui.screens.ble.Screen4Screen
 import com.example.nfccardtaptopayv101.ui.viewmodel.ble.Screen0ViewModel
 import com.example.nfccardtaptopayv101.ui.viewmodel.ble.Screen1ViewModel
 import com.example.nfccardtaptopayv101.ui.viewmodel.ble.Screen2ViewModel
 import com.example.nfccardtaptopayv101.ui.viewmodel.ble.Screen3ViewModel
+import com.example.nfccardtaptopayv101.ui.viewmodel.ble.Screen4ViewModel
+import com.example.nfccardtaptopayv101.ui.viewmodel.ble.NearbyUser
 
 sealed class PaymentScreen(val route: String) {
     object ProfileGatekeeper : PaymentScreen("profile_gatekeeper")
     object ModeSelection : PaymentScreen("mode_selection")
     object RequestMoney : PaymentScreen("request_money")
     object SendMoney : PaymentScreen("send_money")
+    object AmountInput : PaymentScreen("amount_input/{userId}/{userName}/{userImageUrl}")
+    object WaitingScreen : PaymentScreen("waiting_screen")
     object TransactionDetails : PaymentScreen("transaction_details/{userId}/{userName}")
 }
 
@@ -90,11 +95,15 @@ fun ScreensNavGraph(
             Screen2Screen(
                 viewModel = viewModel,
                 onUserSelected = { selectedUser ->
-                    // Navigate to transaction details screen with selected user info
+                    // Navigate to amount input screen (Screen 4) with selected user info
+                    val encodedImageUrl = java.net.URLEncoder.encode(selectedUser.userProfileImageUrl, "UTF-8")
+                    val encodedUserName = java.net.URLEncoder.encode(selectedUser.userName.ifEmpty { "User ${selectedUser.userId}" }, "UTF-8")
+
                     navController.navigate(
-                        PaymentScreen.TransactionDetails.route
+                        PaymentScreen.AmountInput.route
                             .replace("{userId}", selectedUser.userId)
-                            .replace("{userName}", selectedUser.userName.ifEmpty { "User ${selectedUser.userId}" })
+                            .replace("{userName}", encodedUserName)
+                            .replace("{userImageUrl}", encodedImageUrl)
                     )
                 }
             )
@@ -115,6 +124,48 @@ fun ScreensNavGraph(
             )
         }
 
+        composable(PaymentScreen.AmountInput.route) { backStackEntry ->
+            val selectedUserId = backStackEntry.arguments?.getString("userId") ?: ""
+            val selectedUserName = java.net.URLDecoder.decode(backStackEntry.arguments?.getString("userName") ?: "", "UTF-8")
+            val selectedUserImageUrl = java.net.URLDecoder.decode(backStackEntry.arguments?.getString("userImageUrl") ?: "", "UTF-8")
+
+            val viewModel: Screen4ViewModel = viewModel()
+
+            // Create NearbyUser object from navigation arguments
+            val selectedUser = NearbyUser(
+                userId = selectedUserId,
+                userName = selectedUserName,
+                userProfileImageUrl = selectedUserImageUrl,
+                isLoadingData = false
+            )
+
+            Screen4Screen(
+                viewModel = viewModel,
+                selectedUser = selectedUser,
+                merchantUserId = userId,
+                onNavigateToWaitingScreen = {
+                    navController.navigate(PaymentScreen.WaitingScreen.route) {
+                        popUpTo(PaymentScreen.RequestMoney.route) {
+                            inclusive = true
+                        }
+                    }
+                },
+                onNavigateBack = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
+        composable(PaymentScreen.WaitingScreen.route) {
+            // Placeholder for Screen 6 (Waiting/Success Screen)
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                Text("Waiting Screen (Screen 6) - Coming Soon\nWaiting for payment confirmation...")
+            }
+        }
+
         composable(PaymentScreen.TransactionDetails.route) { backStackEntry ->
             val selectedUserId = backStackEntry.arguments?.getString("userId") ?: ""
             val selectedUserName = backStackEntry.arguments?.getString("userName") ?: ""
@@ -128,10 +179,6 @@ fun ScreensNavGraph(
         }
     }
 }
-
-
-
-
 
 
 
@@ -151,9 +198,11 @@ fun ScreensNavGraph(
 //import androidx.navigation.compose.rememberNavController
 //import com.example.nfccardtaptopayv101.ui.screens.ble.Screen0Screen
 //import com.example.nfccardtaptopayv101.ui.screens.ble.Screen1Screen
+//import com.example.nfccardtaptopayv101.ui.screens.ble.Screen2Screen
 //import com.example.nfccardtaptopayv101.ui.screens.ble.Screen3Screen
 //import com.example.nfccardtaptopayv101.ui.viewmodel.ble.Screen0ViewModel
 //import com.example.nfccardtaptopayv101.ui.viewmodel.ble.Screen1ViewModel
+//import com.example.nfccardtaptopayv101.ui.viewmodel.ble.Screen2ViewModel
 //import com.example.nfccardtaptopayv101.ui.viewmodel.ble.Screen3ViewModel
 //
 //sealed class PaymentScreen(val route: String) {
@@ -161,6 +210,7 @@ fun ScreensNavGraph(
 //    object ModeSelection : PaymentScreen("mode_selection")
 //    object RequestMoney : PaymentScreen("request_money")
 //    object SendMoney : PaymentScreen("send_money")
+//    object TransactionDetails : PaymentScreen("transaction_details/{userId}/{userName}")
 //}
 //
 //@Composable
@@ -219,12 +269,19 @@ fun ScreensNavGraph(
 //        }
 //
 //        composable(PaymentScreen.RequestMoney.route) {
-//            Box(
-//                modifier = Modifier.fillMaxSize(),
-//                contentAlignment = Alignment.Center
-//            ) {
-//                Text("Request Money Screen - Coming Soon")
-//            }
+//            val viewModel: Screen2ViewModel = viewModel()
+//
+//            Screen2Screen(
+//                viewModel = viewModel,
+//                onUserSelected = { selectedUser ->
+//                    // Navigate to transaction details screen with selected user info
+//                    navController.navigate(
+//                        PaymentScreen.TransactionDetails.route
+//                            .replace("{userId}", selectedUser.userId)
+//                            .replace("{userName}", selectedUser.userName.ifEmpty { "User ${selectedUser.userId}" })
+//                    )
+//                }
+//            )
 //        }
 //
 //        composable(PaymentScreen.SendMoney.route) {
@@ -241,5 +298,26 @@ fun ScreensNavGraph(
 //                viewModel = viewModel
 //            )
 //        }
+//
+//        composable(PaymentScreen.TransactionDetails.route) { backStackEntry ->
+//            val selectedUserId = backStackEntry.arguments?.getString("userId") ?: ""
+//            val selectedUserName = backStackEntry.arguments?.getString("userName") ?: ""
+//
+//            Box(
+//                modifier = Modifier.fillMaxSize(),
+//                contentAlignment = Alignment.Center
+//            ) {
+//                Text("Transaction Details Screen - Coming Soon\nSelected User: $selectedUserName (ID: $selectedUserId)")
+//            }
+//        }
 //    }
 //}
+//
+//
+//
+//
+//
+//
+//
+//
+//
