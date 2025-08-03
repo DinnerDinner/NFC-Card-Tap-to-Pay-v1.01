@@ -716,3 +716,198 @@ def upload_profile_picture(
 
 
 print("Profile picture endpoints added!")
+
+# Add these imports at the top
+from enum import Enum
+from typing import Dict, Optional
+
+# Add these models after your existing BaseModel classes
+class PaymentRequestStatus(str, Enum):
+    PENDING = "pending"
+    ACCEPTED = "accepted"
+    DECLINED = "declined"
+
+class PaymentRequestPayload(BaseModel):
+    merchant_user_id: int
+    customer_user_id: int
+    amount: float = Field(gt=0, le=9999.99)
+
+class PaymentResponsePayload(BaseModel):
+    customer_user_id: int
+    action: str  # "accept" or "decline"
+
+# Simple in-memory storage for active requests (one per customer)
+# Format: {customer_user_id: request_data}
+active_requests: Dict[int, dict] = {}
+
+# Add these endpoints after your existing ones
+
+@app.post("/payment/request")
+def create_payment_request(payload: PaymentRequestPayload, db: Session = Depends(get_db)):
+    """Screen 4: Merchant creates payment request"""
+    
+    # Validate merchant exists
+    merchant = db.query(User).filter(User.id == payload.merchant_user_id).first()
+    if not merchant:
+        raise HTTPException(status_code=404, detail="Merchant not found")
+    
+    # Validate customer exists
+    customer = db.query(User).filter(User.id == payload.customer_user_id).first()
+    if not customer:
+        raise HTTPException(status_code=404, detail="Customer not found")
+    
+    # Validate amount
+    amount_cents = int(round(payload.amount * 100))
+    
+    # Check customer balance
+    if customer.balance_cents < amount_cents:
+        raise HTTPException(
+            status_code=400, 
+            detail=f"Customer has insufficient funds. Available: ${customer.balance_cents/100:.2f}"
+        )
+    
+    # Prevent self-payment
+    if payload.merchant_user_id == payload.customer_user_id:
+        raise HTTPException(status_code=400, detail="Cannot request payment from yourself")
+    
+    # Generate request ID
+    request_id = f"req_{payload.merchant_user_id}_{payload.customer_user_id}_{int(datetime.now().timestamp())}"
+    
+    # Store the request (overwrite any existing request for this customer)
+    request_data = {
+        "request_id": request_id,
+        "merchant_user_id": payload.merchant_user_id,
+        "customer_user_id": payload.customer_user_id,
+        "amount": payload.amount,
+        "amount_cents": amount_cents,
+        "status": PaymentRequestStatus.PENDING,
+        "created_at": datetime.now(),
+        "merchant_name": f"{merchant.first_name} {merchant.last_name}",
+        "merchant_profile_url": merchant.profile_picture_url
+    }
+    
+    active_requests[payload.customer_user_id] = request_data
+    
+    return {
+        "success": True,
+        "request_id": request_id,
+        "message": f"Payment request sent to {customer.first_name} {customer.last_name}",
+        "amount": payload.amount,
+        "customer_name": f"{customer.first_name} {customer.last_name}"
+    }
+
+@app.post("/payment/check_request")
+def check_payment_request(payload: dict, db: Session = Depends(get_db)):
+    """Screen 5: Customer checks if they have a pending payment request"""
+    
+    user_id = payload.get("user_id")
+    if not user_id:
+        raise HTTPException(status_code=400, detail="user_id required")
+    
+    # Check if customer has a pending request
+    request_data = active_requests.get(user_id)
+    
+    if not request_data or request_data["status"] != PaymentRequestStatus.PENDING:
+        return {
+            "has_pending_request": False,
+            "message": "No pending payment requests"
+        }
+    
+    return {
+        "has_pending_request": True,
+        "request_id": request_data["request_id"],
+        "merchant_name": request_data["merchant_name"],
+        "merchant_profile_url": request_data.get("merchant_profile_url"),
+        "amount": request_data["amount"],
+        "created_at": request_data["created_at"]
+    }
+
+@app.post("/payment/respond")
+def respond_to_payment_request(payload: PaymentResponsePayload, db: Session = Depends(get_db)):
+    """Screen 5: Customer accepts or declines payment request"""
+    
+    # Get the customer's active request
+    request_data = active_requests.get(payload.customer_user_id)
+    if not request_data:
+        raise HTTPException(status_code=404, detail="No active payment request found")
+    
+    if request_data["status"] != PaymentRequestStatus.PENDING:
+        raise HTTPException(status_code=400, detail="Request already processed")
+    
+    if payload.action == "decline":
+        # Update status and keep in memory for merchant to see
+        request_data["status"] = PaymentRequestStatus.DECLINED
+        active_requests[payload.customer_user_id] = request_data
+        
+        return {
+            "success": True,
+            "action": "declined",
+            "message": "Payment request declined"
+        }
+    
+    elif payload.action == "accept":
+        # Get users for balance transfer
+        customer = db.query(User).filter(User.id == payload.customer_user_id).first()
+        merchant = db.query(User).filter(User.id == request_data["merchant_user_id"]).first()
+        
+        if not customer or not merchant:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        amount_cents = request_data["amount_cents"]
+        
+        # Final balance check
+        if customer.balance_cents < amount_cents:
+            raise HTTPException(status_code=400, detail="Insufficient funds")
+        
+        # Transfer money
+        customer.balance_cents -= amount_cents
+        merchant.balance_cents += amount_cents
+        db.commit()
+        
+        # Update request status
+        request_data["status"] = PaymentRequestStatus.ACCEPTED
+        request_data["completed_at"] = datetime.now()
+        active_requests[payload.customer_user_id] = request_data
+        
+        return {
+            "success": True,
+            "action": "accepted",
+            "message": f"Payment of ${request_data['amount']:.2f} completed successfully!",
+            "new_balance": customer.balance_cents / 100,
+            "amount_paid": request_data["amount"]
+        }
+    
+    else:
+        raise HTTPException(status_code=400, detail="Action must be 'accept' or 'decline'")
+
+@app.get("/payment/status/{customer_user_id}")
+def get_payment_status(customer_user_id: int):
+    """Screen 6: Merchant polls for payment status"""
+    
+    request_data = active_requests.get(customer_user_id)
+    if not request_data:
+        raise HTTPException(status_code=404, detail="No payment request found")
+    
+    # Auto-cleanup completed/declined requests after returning status
+    if request_data["status"] in [PaymentRequestStatus.ACCEPTED, PaymentRequestStatus.DECLINED]:
+        # Return status first, then clean up
+        status_response = {
+            "status": request_data["status"],
+            "amount": request_data["amount"],
+            "customer_name": f"Customer {customer_user_id}",  # You could get actual name if needed
+            "completed": True,
+            "message": f"Payment {request_data['status'].value}"
+        }
+        
+        # Clean up the request after 1 second delay (in real app, use background task)
+        # For now, we'll keep it for the response
+        return status_response
+    
+    return {
+        "status": request_data["status"],
+        "amount": request_data["amount"],
+        "completed": False,
+        "message": "Waiting for customer response..."
+    }
+
+print("Simplified real-time payment endpoints added!")

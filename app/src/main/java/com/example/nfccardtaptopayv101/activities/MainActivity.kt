@@ -19,6 +19,7 @@ class MainActivity : ComponentActivity() {
 
             setContent {
                 NFCCardTapToPayV101Theme {
+
                     LoggedInHomeScreen(userData, startOnProfile = startOnProfile)
                 }
             }
