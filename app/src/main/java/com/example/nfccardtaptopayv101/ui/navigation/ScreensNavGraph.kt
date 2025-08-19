@@ -157,7 +157,7 @@ fun ScreensNavGraph(
         }
 
         composable(PaymentScreen.WaitingScreen.route) {
-            // Placeholder for Screen 6 (Waiting/Success Screen)
+            // Placeholder for Screen aaa6 (Waiting/Success Screen)
             Box(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center
